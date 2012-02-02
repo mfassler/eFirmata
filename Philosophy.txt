@@ -1,0 +1,69 @@
+
+ - The reasons for eFirmata -
+
+### Number 1:
+
+The number 1 reason why eFirmata exists is because USB cable length 
+is limited to about 3 meters.  
+
+I would like to attach arbitrary slave devices (like sensors, motor 
+control, lighting control, etc) to my computer at distances greater 
+than 3 meters.  I could use multiple hubs, chained together.  But 
+each hub adds latency, cost, and a point of failure.  
+
+A good solution would be Arduino+Firmata, using RS-422.  This 
+requires custom cabling with custom connectors.  The best, cheapest 
+cabling I could find for this purpose was CAT-5.  It also requires 
+that my PC has a serial port for each Firmata.  
+
+So... if I'm going to use CAT-5, then why not just use CAT-5?  And 
+an ethernet switch is a nice way to multiplex a gigabit connection 
+(on my PC) into many 100-mbit connections (on each eFirmata).  
+
+
+### Number 2:
+
+Low-latency.  The most extreme, but realistic example I can think 
+of is streaming audio.  I want small buffers with as-low-of-latency 
+as possible.  This is why I don't bother with TCP/IP.  Data is put 
+onto an ethernet frame as quickly as possible.  
+
+
+### Number 3:
+
+USB was designed to be easy for the end-user, which means that it's 
+difficult for the device-driver writer.  In contrast, eFirmata is 
+meant to be easy for the application developer.  If you need to 
+build a laboratory (or factory floor) full of sensors and robots, 
+eFirmata should enable that in the easiest possible way.  
+
+
+### Number 4:
+
+Multi-protocol.  I want eFirmata to support all of the 
+functionality of Firmata, MIDI, real-time audio, etc, in a mixed 
+environment.  It should be possible to run an entire stage 
+performance (MIDI, microphones, lighting-effects, etc) on one, 
+single eFirmata network.  
+
+
+(A possible future goal of eFirmata is to support real-time 
+probability data and matrix data, for use with machine learning.  
+(Real-time bayesian networks and real-time neural-networks 
+communicating over ethernet.)  But there's nothing about that kind 
+of data which needs to be concered about the specifics of I/O, so 
+it is left out of this design for now.)  
+
+
+
+
+Use cases:
+ - laboratory automation
+ - factory automation
+ - studio recording (MIDI-like)
+ - motion capture
+ - stage performance
+ - integrating real-time motion capture into a live stage 
+   performance
+ - real-time control of robotics
+

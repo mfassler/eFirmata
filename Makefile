@@ -10,7 +10,12 @@ TARGET = eFirmata
 OBJECTS = startup.o
 OBJECTS += CMSIS/system_LPC17xx.o
 OBJECTS += uart.o
+OBJECTS += debug.o
+OBJECTS += firmataProtocol.o
 OBJECTS += EMAC.o
+OBJECTS += adc.o
+OBJECTS += dac.o
+OBJECTS += pwm.o
 OBJECTS += main.o 
 
 
@@ -43,6 +48,8 @@ INCDIRS = -I CMSIS/
 
 CFLAGS = -W -Wall -Os --std=gnu99 -fgnu89-inline -mcpu=cortex-m3 -mthumb
 CFLAGS += -ffunction-sections -fdata-sections
+#CFLAGS += -DSELF_ADDR={0x00,0x02,0xf7,0xaa,0xbf,0xcd}
+#CLFAGS += -DDEST_ADDR={0xE0,0xCB,0x4E,0x47,0x7F,0x9B}
 CFLAGS += $(INCDIRS)
 
 #LDFLAGS = -Map $(TARGET).map --gc-sections -T LPC1768-flash.ld
@@ -75,7 +82,7 @@ $(TARGET).elf: $(OBJECTS)
 	$(LD) $(LDFLAGS) $(OBJECTS) -o $@
 
 install: $(TARGET).bin
-	lpc21isp -donotstart -bin $(TARGET).bin /dev/ttyUSB2 57600 14748
+	lpc21isp -donotstart -bin $(TARGET).bin /dev/ttyUSB1 57600 14748
 
 clean:
 	rm -f $(OBJECTS)

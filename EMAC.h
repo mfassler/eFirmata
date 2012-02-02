@@ -318,6 +318,9 @@ unsigned int   CheckFrameReceived(void);
 void           RequestSend(unsigned short FrameSize);
 unsigned int   Rdy4Tx(void);
 
+void ENET_IRQHandler(void);
+
+
 #endif
 
 /*----------------------------------------------------------------------------

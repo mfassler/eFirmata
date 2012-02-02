@@ -14,16 +14,23 @@
  *****        LPC17xx EMAC Ethernet controller                *****
  *****                                                        *****
  ******************************************************************/
+
+
+// TODO:  proper CRCs.  See:  http://www.edaboard.com/thread120700.html
+
+
 #include "LPC17xx.h"
 #include "type.h"
 #include "EMAC.h"
+#include "debug.h"
 //#include "tcpip.h"
+#include "firmataProtocol.h"
 
-void debugByte(char*, uint8_t);
-void debugWord(char*, uint16_t);
-void mySerSend(char* , uint32_t);
+#include "MAC_ADDRESSES.h"
+const char myAddress2[] = SELF_ADDR;
+
+
 void delay (uint32_t);
-
 
 static unsigned short *rptr;
 static unsigned short *tptr;
@@ -32,6 +39,32 @@ static unsigned short *tptr;
 #define MDIO    0x00000200
 #define MDC     0x00000100
 */
+
+
+
+void ENET_IRQHandler (void)
+{
+    unsigned short rxLen;
+    unsigned short rxBuffer[1522];
+
+    debug("ENET_IRQHandler()");
+    debugLong("LPC_EMAC->IntStatus: ", LPC_EMAC->IntStatus);
+
+    while(LPC_EMAC->RxConsumeIndex != LPC_EMAC->RxProduceIndex)
+    {
+        rxLen = StartReadFrame();
+        debugWord("rxLen: ", rxLen);
+        CopyFromFrame_EMAC(rxBuffer, rxLen);
+        debug(rxBuffer);
+        EndReadFrame();
+        parseFrame( (char *) rxBuffer, rxLen);
+    }
+
+    LPC_EMAC->IntClear  = 0xFFFF;
+
+}
+
+
 
 /*--------------------------- write_PHY -------------------------------------*/
 
@@ -51,7 +84,7 @@ static void write_PHY (unsigned int PhyReg, unsigned short Value) {
             break;
         }
     }
-    mySerSend("write_PHY timeout\r\n", 200);
+    debug("write_PHY timeout");
 }
 
 
@@ -74,7 +107,7 @@ static unsigned short read_PHY (unsigned int PhyReg) {
     }
     if (tout > (MII_RD_TOUT-2))
     {
-        mySerSend("read_PHY timeout\r\n", 200);
+        debug("read_PHY timeout");
     }
     LPC_EMAC->MCMD = 0;
     val = LPC_EMAC->MRDD;
@@ -170,7 +203,7 @@ void Init_EMAC(void)
         regv = read_PHY (PHY_REG_BMCR);
         if (!(regv & 0x8000))  // Reset complete
         {
-            mySerSend("Reset complete\r\n", 200);
+            debug("Reset complete");
             break;
         }
     }
@@ -185,8 +218,8 @@ void Init_EMAC(void)
     //if (((id1 << 16) | (id2 & 0xFFF0)) == DP83848C_ID) 
     if (((id1 << 16) | (id2 & 0xFFF0)) == LAN8720_ID) 
     {
-        //mySerSend("This is a DP-83848\r\n", 25);
-        mySerSend("This is a LAN-8720\r\n", 25);
+        //debug("This is a DP-83848");
+        debug("This is a LAN-8720");
         /* Configure the PHY device */
 
         /* Use autonegotiation about the link speed. */
@@ -199,7 +232,7 @@ void Init_EMAC(void)
             if (regv & 0x0020) // Autonegotiation Complete. 
             {
                 debugWord("PHY_REG_BMSR: ", regv);
-                mySerSend("auto-neg complete\r\n", 32);
+                debug("auto-neg complete");
                 break;
             }
         }
@@ -213,7 +246,7 @@ void Init_EMAC(void)
         if (regv & 0x0001) // Link is on
         {
             debugWord("PHY_REG_STS: ", regv);
-            mySerSend("got link\r\n", 32);
+            debug("got link");
             break;
         }
     }
@@ -235,18 +268,18 @@ void Init_EMAC(void)
     if (regv & 0x0002) // 10MBit 
     {
         LPC_EMAC->SUPP = 0;
-        mySerSend("10 mbit\r\n", 9);
+        debug("10 mbit");
     }
     else // 100MBit
     {
         LPC_EMAC->SUPP = SUPP_SPEED;
-        mySerSend("100 mbit\r\n", 10);
+        debug("100 mbit");
     }
 
     /* Set the Ethernet MAC Address registers */
-    LPC_EMAC->SA0 = (MYMAC_6 << 8) | MYMAC_5;
-    LPC_EMAC->SA1 = (MYMAC_4 << 8) | MYMAC_3;
-    LPC_EMAC->SA2 = (MYMAC_2 << 8) | MYMAC_1;
+    LPC_EMAC->SA0 = (myAddress2[5] << 8) | myAddress2[4];
+    LPC_EMAC->SA1 = (myAddress2[3] << 8) | myAddress2[2];
+    LPC_EMAC->SA2 = (myAddress2[1] << 8) | myAddress2[0];
 
     /* Initialize Tx and Rx DMA Descriptors */
     rx_descr_init ();

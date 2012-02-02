@@ -21,6 +21,7 @@
 #include <LPC17xx.h>
 #include <type.h>
 #include "uart.h"
+#include "debug.h"
 
 volatile uint32_t UART0Status, UART1Status;
 volatile uint8_t UART0TxEmpty = 1, UART1TxEmpty = 1;
@@ -40,7 +41,8 @@ void UART0_IRQHandler (void)
 {
   uint8_t IIRValue, LSRValue;
   uint8_t Dummy = Dummy;
-	
+
+    debug("UART0_IRQHandler()");	
   IIRValue = LPC_UART0->IIR;
     
   IIRValue >>= 1;			/* skip pending bit in IIR */
