@@ -4,7 +4,7 @@
 ### Number 1:
 
 The number 1 reason why eFirmata exists is because USB cable length 
-is limited to about 3 meters.  
+is limited to about 5 meters.  
 
 I would like to attach arbitrary slave devices (like sensors, motor 
 control, lighting control, etc) to my computer at distances greater 
