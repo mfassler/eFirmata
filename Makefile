@@ -13,6 +13,7 @@ OBJECTS += uart.o
 OBJECTS += debug.o
 OBJECTS += firmataProtocol.o
 OBJECTS += EMAC.o
+OBJECTS += ssp.o
 OBJECTS += adc.o
 OBJECTS += dac.o
 OBJECTS += pwm.o

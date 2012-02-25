@@ -74,13 +74,11 @@ void ADC_IRQHandler (void)
 //        debugLong("ADCValue[5]: ", ADCValue[5]);
 
         frameIdx = whichByteInPayload + 6 + 6 + 2;
-        bigEtherFrame[whichFrame][frameIdx] = ADCValue[5] & 0xFF;
-        whichByteInPayload++;
-//        debugWord("whichFrame: ", whichFrame);
-//        debugWord("whichByte: ", whichByteInPayload);
+        bigEtherFrame[whichFrame][frameIdx] = (ADCValue[5] & 0xFF0 ) >> 4;
+//        whichByteInPayload++;
 
 
-        if (whichByteInPayload == 256)
+/*        if (whichByteInPayload == 256)
         {
             whichByteInPayload = 0;
             previousFrame = whichFrame;
@@ -91,7 +89,7 @@ void ADC_IRQHandler (void)
             }
             RequestSend(6 + 6+ 2 + 256 + 4);
             CopyToFrame_EMAC( (unsigned short*) bigEtherFrame[previousFrame], 6+6+2+256+4);
-        }
+        }*/
     }
 
 
@@ -104,7 +102,7 @@ void ADC_IRQHandler (void)
 }
 
 
-void ADCInit(uint32_t ADC_Clk)
+void ADCInit(void)
 {
     uint32_t i, pclkdiv, pclk;
 
@@ -151,7 +149,7 @@ void ADCInit(uint32_t ADC_Clk)
 
     debugLong("pclk: ", pclk);
     debugLong("SystemCoreClock: ", SystemCoreClock);
-    debugLong("ADC_Clk: ", ADC_Clk);
+    //debugLong("ADC_Clk: ", ADC_Clk);
 
     LPC_ADC->ADCR = ( 0x01 << 5 ) |  /* SEL=1,select channel 0~7 on ADC0 */
     //    ( ( pclk  / ADC_Clk - 1 ) << 8 ) |  /* CLKDIV = Fpclk / ADC_Clk - 1 */ 

@@ -52,44 +52,57 @@ void UART1_sendString(char *buf, uint8_t length)
     }
 }
 
+void UART2_sendString(char *buf, uint8_t length)
+{
+    while (length != 0)
+    {
+        while(! (LPC_UART2->LSR) ); // wait for the TX fifo to clear
+        LPC_UART2->THR = *buf;
+        buf++;
+        length--;
+        if (*buf == 0x00)
+        {
+            break;
+        }
+    }
+}
 
 void debug(char *msg)
 {
-    UART1_sendString(msg, 200);
-    UART1_sendString("\n\r", 2);
+    UART2_sendString(msg, 200);
+    UART2_sendString("\n\r", 2);
 }
-
 
 void debugByte(char* msg, uint8_t value)
 {
     char buf[2];
     int bufLen;
-    UART1_sendString(msg, 200);
-    UART1_sendString("0x", 2);
+    UART2_sendString(msg, 200);
+    UART2_sendString("0x", 2);
     bufLen = formatHex(buf, value);
-    UART1_sendString(buf, bufLen);
-    UART1_sendString("\n\r", 2);
+    UART2_sendString(buf, bufLen);
+    UART2_sendString("\n\r", 2);
 }
 
 void debugWord(char* msg, uint16_t value)
 {
     char buf[4];
     int bufLen;
-    UART1_sendString(msg, 200);
-    UART1_sendString("0x", 2);
+    UART2_sendString(msg, 200);
+    UART2_sendString("0x", 2);
     bufLen = formatHexWord(buf, value);
-    UART1_sendString(buf, bufLen);
-    UART1_sendString("\n\r", 2);
+    UART2_sendString(buf, bufLen);
+    UART2_sendString("\n\r", 2);
 }
 
 void debugLong(char* msg, uint32_t value)
 {
     char buf[8];
     int bufLen;
-    UART1_sendString(msg, 200);
-    UART1_sendString("0x", 2);
+    UART2_sendString(msg, 200);
+    UART2_sendString("0x", 2);
     bufLen = formatHexLong(buf, value);
-    UART1_sendString(buf, bufLen);
-    UART1_sendString("\n\r", 2);
+    UART2_sendString(buf, bufLen);
+    UART2_sendString("\n\r", 2);
 }
 

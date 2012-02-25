@@ -8,7 +8,7 @@ is limited to about 5 meters.
 
 I would like to attach arbitrary slave devices (like sensors, motor 
 control, lighting control, etc) to my computer at distances greater 
-than 3 meters.  I could use multiple hubs, chained together.  But 
+than 5 meters.  I could use multiple hubs, chained together.  But 
 each hub adds latency, cost, and a point of failure.  
 
 A good solution would be Arduino+Firmata, using RS-422.  This 

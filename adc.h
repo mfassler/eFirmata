@@ -37,11 +37,8 @@
 #define ADC_CLK			1000000		/* set to 1Mhz */
 //#define ADC_CLK			520000		/* 520 KHz / 65 samples = 8000KSPS (ends up being 8012.8 KSPS) */
 
-extern void ADC_IRQHandler( void );
-extern void ADCInit( uint32_t ADC_Clk );
-extern uint32_t ADCRead( uint8_t channelNum );
-extern void ADCBurstRead( void );
+extern void ADC_IRQHandler(void);
+extern void ADCInit(void);
+extern uint32_t ADCRead(uint8_t channelNum);
+extern void ADCBurstRead(void);
 #endif /* end __ADC_H */
-/*****************************************************************************
-**                            End Of File
-******************************************************************************/
