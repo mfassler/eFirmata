@@ -23,7 +23,7 @@
 #include "type.h"
 #include "adc.h"
 #include "debug.h"
-#include "EMAC.h"
+#include "emac.h"
 
 volatile uint16_t ADCValue[ADC_NUM];
 volatile uint32_t ADCIntDone = 0;

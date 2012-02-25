@@ -21,13 +21,11 @@
 
 #include "LPC17xx.h"
 #include "type.h"
-#include "EMAC.h"
+#include "emac.h"
 #include "debug.h"
-//#include "tcpip.h"
 #include "firmataProtocol.h"
 
 #include "MAC_ADDRESSES.h"
-const char myAddress2[] = SELF_ADDR;
 
 
 void delay (uint32_t);
@@ -162,6 +160,7 @@ void tx_descr_init (void) {
 void Init_EMAC(void)
 {
     unsigned int regv,tout,id1,id2;
+    const char myAddress[] = SELF_ADDR;
 
     LPC_GPIO1->FIOPIN = (1<<18);
     /* Power Up the EMAC controller. */
@@ -277,9 +276,9 @@ void Init_EMAC(void)
     }
 
     /* Set the Ethernet MAC Address registers */
-    LPC_EMAC->SA0 = (myAddress2[5] << 8) | myAddress2[4];
-    LPC_EMAC->SA1 = (myAddress2[3] << 8) | myAddress2[2];
-    LPC_EMAC->SA2 = (myAddress2[1] << 8) | myAddress2[0];
+    LPC_EMAC->SA0 = (myAddress[5] << 8) | myAddress[4];
+    LPC_EMAC->SA1 = (myAddress[3] << 8) | myAddress[2];
+    LPC_EMAC->SA2 = (myAddress[1] << 8) | myAddress[0];
 
     /* Initialize Tx and Rx DMA Descriptors */
     rx_descr_init ();

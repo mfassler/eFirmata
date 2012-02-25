@@ -2,7 +2,7 @@
 #include <LPC17xx.h>
 #include "uart.h"
 #include "debug.h"
-#include "EMAC.h"
+#include "emac.h"
 #include "ssp.h"
 #include "adc.h"
 #include "dac.h"
