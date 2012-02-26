@@ -212,12 +212,12 @@ void SSP1Init( void )
 }
 
 
-void SSPSend( uint32_t portnum, uint8_t *buf, uint32_t Length )
+void SSP1Send(uint8_t *buf, uint32_t Length)
 {
     uint32_t i;
     uint8_t Dummy = Dummy;
 
-    debug("SSPSend()");
+    debug("SSP1Send()");
     for ( i = 0; i < Length; i++ )
     {
         /* Move on only if NOT busy and TX FIFO not full. */

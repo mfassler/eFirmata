@@ -43,8 +43,6 @@ void ADC_IRQHandler (void)
     uint16_t frameIdx;
     //int i;
 
-//    debug("inside ADC_IRQHandler()");
-
     regVal = LPC_ADC->ADSTAT;   /* Read ADC will clear the interrupt */
 
 /*
@@ -166,18 +164,8 @@ void ADCInit(void)
     return;
 }
 
-/*****************************************************************************
-** Function name:		ADCRead
-**
-** Descriptions:		Read ADC channel
-**
-** parameters:			Channel number
-** Returned value:		Value read, if interrupt driven, return channel #
-** 
-*****************************************************************************/
-uint32_t ADCRead( uint8_t channelNum )
+uint32_t ADCRead(uint8_t channelNum)
 {
-
     /* channel number is 0 through 7 */
     if ( channelNum >= ADC_NUM )
     {
@@ -188,7 +176,7 @@ uint32_t ADCRead( uint8_t channelNum )
 
     /* switch channel,start A/D convert */
 
-    return ( channelNum );	/* if it's interrupt driven, the ADC reading is 
+    return (channelNum);	/* if it's interrupt driven, the ADC reading is 
 							done inside the handler. so, return channel number */
 }
 

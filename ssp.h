@@ -111,13 +111,10 @@ extern void SSP_SSELToggle( uint32_t portnum, uint32_t toggle );
 extern void SSP0Init( void );
 extern void SSP1Init( void );
 extern void SSP2Init( void );
-extern void SSPSend( uint32_t portnum, uint8_t *Buf, uint32_t Length );
+extern void SSP1Send(uint8_t *Buf, uint32_t Length);
 extern void SSPReceive( uint32_t portnum, uint8_t *buf, uint32_t Length );
 
 extern void getAccel(uint8_t, uint16_t*, uint16_t*, uint16_t*);
 
 #endif  /* __SSP_H__ */
-/*****************************************************************************
-**                            End Of File
-******************************************************************************/
 

@@ -53,7 +53,7 @@ void ENET_IRQHandler (void)
         rxLen = StartReadFrame();
         debugWord("rxLen: ", rxLen);
         CopyFromFrame_EMAC(rxBuffer, rxLen);
-        debug(rxBuffer);
+        //debug(rxBuffer);
         EndReadFrame();
         parseFrame( (char *) rxBuffer, rxLen);
     }
@@ -63,8 +63,6 @@ void ENET_IRQHandler (void)
 }
 
 
-
-/*--------------------------- write_PHY -------------------------------------*/
 
 static void write_PHY (unsigned int PhyReg, unsigned short Value) {
     /* Write a data 'Value' to PHY register 'PhyReg'. */
@@ -85,8 +83,6 @@ static void write_PHY (unsigned int PhyReg, unsigned short Value) {
     debug("write_PHY timeout");
 }
 
-
-/*--------------------------- read_PHY --------------------------------------*/
 
 static unsigned short read_PHY (unsigned int PhyReg) {
     /* Read a PHY register 'PhyReg'. */

@@ -14,7 +14,7 @@ extern volatile uint32_t OverRunCounter;
 
 #include "MAC_ADDRESSES.h"
 
-
+#include "firmataProtocol.h"
 
 char etherFrame[] = {
     // 14 bytes here:
@@ -35,6 +35,21 @@ char etherFrame[] = {
 
 char bigEtherFrame[2][6+6+2+1024+4];
 
+struct sensorPacket mySensorPacket = {
+    .dest = DEST_ADDR,
+    .src = SELF_ADDR,
+    .prot = EFIRMATA_PROTOCOL,
+    .subProt = ":-)",
+    .adcVal = 0,
+    .xAccel0 = 0,
+    .yAccel0 = 0,
+    .zAccel0 = 0,
+    .xAccel1 = 0,
+    .yAccel1 = 0,
+    .zAccel1 = 0,
+    .happyMessage = "Hello",
+    .fcs = 0
+};
 
 void setAddressesAndProtocol(void)
 {
@@ -85,49 +100,20 @@ void delay (uint32_t interval)
 void jiffyAction (void)
 {
     // Once every 10 ms we send sensor data to the PC.
-    char xAccelText[4];
-    char yAccelText[4];
-    char zAccelText[4];
-    uint16_t xAccel;
-    uint16_t yAccel;
-    uint16_t zAccel;
-    char adcText[4];
 
     // For now, we'll only run once every 16 jiffies:
-    if ((current_time & 0xf) != 0)
-        return;
+//    if ((current_time & 0xf) != 0)
+//        return;
 
-    formatHexWord(adcText, ADCValue[5]);
-    etherFrame[20] = adcText[0];
-    etherFrame[21] = adcText[1];
-    etherFrame[22] = adcText[2];
-    etherFrame[23] = adcText[3];
+    mySensorPacket.adcVal = ADCValue[5];
 
-    getAccel(0, &xAccel, &yAccel, &zAccel);
-    formatHexWord(xAccelText, xAccel);
-    formatHexWord(yAccelText, yAccel);
-    formatHexWord(zAccelText, zAccel);
+    getAccel(0, &(mySensorPacket.xAccel0), 
+                &(mySensorPacket.yAccel0),
+                &(mySensorPacket.zAccel0)
+    );
 
-    etherFrame[26] = xAccelText[0];
-    etherFrame[27] = xAccelText[1];
-    etherFrame[28] = xAccelText[2];
-    etherFrame[29] = xAccelText[3];
-    etherFrame[30] = 32;
-
-    etherFrame[31] = yAccelText[0];
-    etherFrame[32] = yAccelText[1];
-    etherFrame[33] = yAccelText[2];
-    etherFrame[34] = yAccelText[3];
-    etherFrame[35] = 32;
-
-    etherFrame[36] = zAccelText[0];
-    etherFrame[37] = zAccelText[1];
-    etherFrame[38] = zAccelText[2];
-    etherFrame[39] = zAccelText[3];
-    etherFrame[40] = 32;
-
-    RequestSend(62);
-    CopyToFrame_EMAC( (unsigned short *) etherFrame, 62);
+    RequestSend( sizeof(struct sensorPacket));
+    CopyToFrame_EMAC(&mySensorPacket, sizeof(struct sensorPacket));
 }
 
 
@@ -156,12 +142,7 @@ int main() {
     // Set our addresses: 
     setAddressesAndProtocol();
 
-    // Send one ethernet frame:
-    RequestSend(62);
-    CopyToFrame_EMAC( (unsigned short *) etherFrame, 62);
-
     LPC_GPIO1->FIOSET = (1 << 23);  // Turn on blinky LED #4
-
 
 
     // ***** BEGIN:  Initialize peripherials
@@ -169,8 +150,8 @@ int main() {
     // Disable UART0 and UART1 for power-saving:
     //LPC_SC->PCONP &= ~((1 << 3) | (1 << 4));
 
-    // Enable some digital outputs:
-    //LPC_GPIO2->FIODIR = 0x00003fc0; // P2.6 through P2.13
+    // Digital outputs for the eFirmata protocol:
+    LPC_GPIO2->FIODIR = 0x00003fc0; // P2.6 through P2.13
 
     ADCInit();
     DACInit();
