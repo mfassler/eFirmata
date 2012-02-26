@@ -109,8 +109,11 @@ void jiffyAction (void)
 
     getAccel(0, &(mySensorPacket.xAccel0), 
                 &(mySensorPacket.yAccel0),
-                &(mySensorPacket.zAccel0)
-    );
+                &(mySensorPacket.zAccel0)  );
+
+    getAccel(1, &(mySensorPacket.xAccel1), 
+                &(mySensorPacket.yAccel1),
+                &(mySensorPacket.zAccel1)  );
 
     RequestSend( sizeof(struct sensorPacket));
     CopyToFrame_EMAC(&mySensorPacket, sizeof(struct sensorPacket));
@@ -166,12 +169,6 @@ int main() {
 
     while (1)
     {
-        etherFrame[60]++;
-        if (etherFrame[60] == 122)
-        {
-            etherFrame[60] = 97;
-        }
-
         delay(12);
         LPC_GPIO1->FIOSET = (1 << 20) | (1<<23);  // heartbeat
 

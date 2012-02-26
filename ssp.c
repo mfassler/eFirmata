@@ -124,10 +124,8 @@ void SSP0Init( void )
     LPC_PINCON->PINSEL1 &= ~((0x3<<0)|(0x3<<2)|(0x3<<4));
     LPC_PINCON->PINSEL1 |= ((0x2<<0)|(0x2<<2)|(0x2<<4));
   
-#if !USE_CS
     LPC_PINCON->PINSEL1 &= ~(0x3<<0);
     LPC_GPIO0->FIODIR |= (0x1<<16);     /* P0.16 defined as GPIO and Outputs */
-#endif
 		
     /* Set DSS data to 8-bit, Frame format SPI, CPOL = 0, CPHA = 0, and SCR is 15 */
     LPC_SSP0->CR0 = 0x0707;
@@ -143,24 +141,9 @@ void SSP0Init( void )
     /* Enable the SSP Interrupt */
     NVIC_EnableIRQ(SSP0_IRQn);
 	
-    /* Device select as master, SSP Enabled */
-#if LOOPBACK_MODE
-    LPC_SSP0->CR1 = SSPCR1_LBM | SSPCR1_SSE;
-#else
-#if SSP_SLAVE
-    /* Slave mode */
-    if ( LPC_SSP0->CR1 & SSPCR1_SSE )
-    {
-        /* The slave bit can't be set until SSE bit is zero. */
-        LPC_SSP0->CR1 &= ~SSPCR1_SSE;
-    }
-    LPC_SSP0->CR1 = SSPCR1_MS;		/* Enable slave bit first */
-    LPC_SSP0->CR1 |= SSPCR1_SSE;	/* Enable SSP */
-#else
     /* Master mode */
     LPC_SSP0->CR1 = SSPCR1_SSE;
-#endif
-#endif
+
     /* Set SSPINMS registers to enable interrupts */
     /* enable all error related interrupts */
     LPC_SSP0->IMSC = SSPIMSC_RORIM | SSPIMSC_RTIM;
@@ -182,11 +165,14 @@ void SSP1Init( void )
     LPC_PINCON->PINSEL0 &= ~((0x3<<12)|(0x3<<14)|(0x3<<16)|(0x3<<18));
     LPC_PINCON->PINSEL0 |= ((0x2<<12)|(0x2<<14)|(0x2<<16)|(0x2<<18));
 
-#if !USE_CS
-    LPC_PINCON->PINSEL0 &= ~(0x3<<12);
-    LPC_GPIO0->FIODIR |= (0x1<<6);		/* P0.6 defined as GPIO and Outputs */
-    LPC_GPIO0->FIOSET = (1<<6);    // The KXP84 Accelerometer likes it high...
-#endif
+    // We use P0.6 as CS for KXP84 #0
+    // We use P0.0 as CS for KXP84 #1
+    LPC_PINCON->PINSEL0 &= ~(0x3 << 12);  // Set P0.6 to GPIO
+    LPC_PINCON->PINSEL0 &= ~(0x3 << 0);   // Set P0.0 to GPIO
+    LPC_GPIO0->FIODIR |= (1 << 6);
+    LPC_GPIO0->FIODIR |= (1 << 0);
+    LPC_GPIO0->FIOSET = (1 << 6);   // The KXP84 Accelerometer likes it high...
+    LPC_GPIO0->FIOSET = (1 << 0);   // The KXP84 Accelerometer likes it high...
 
     /* Set DSS data to 8-bit, Frame format SPI, CPOL = 0, CPHA = 0, and SCR is 15 */
     LPC_SSP1->CR0 = 0x0707;
@@ -243,11 +229,11 @@ void getAccel(uint8_t whichChip, uint16_t *x, uint16_t *y, uint16_t *z)
     uint8_t MSByte;
     if (whichChip == 0)
     {
-        LPC_GPIO0->FIOCLR = (1<<6);  // CS low
+        LPC_GPIO0->FIOCLR = (1 << 6);  // CS low
     }
     else
     {
-        LPC_GPIO0->FIOCLR = (1<<6);  // CS low
+        LPC_GPIO0->FIOCLR = (1 << 0);  // CS low
     }
     /* Move on only if NOT busy and TX FIFO not full. */
     while ( (LPC_SSP1->SR & (SSPSR_TNF|SSPSR_BSY)) != SSPSR_TNF );
@@ -290,11 +276,11 @@ void getAccel(uint8_t whichChip, uint16_t *x, uint16_t *y, uint16_t *z)
 
     if (whichChip == 0)
     {
-        LPC_GPIO0->FIOSET = (1<<6);  // CS high
+        LPC_GPIO0->FIOSET = (1 << 6);  // CS high
     }
     else
     {
-        LPC_GPIO0->FIOSET = (1<<6);  // CS high
+        LPC_GPIO0->FIOSET = (1 << 0);  // CS high
     }
 
     return;
@@ -314,17 +300,9 @@ void SSPReceive( uint32_t portnum, uint8_t *buf, uint32_t Length )
         before a read can take place. */
         if ( portnum == 0 )
         {
-#if !LOOPBACK_MODE
-#if SSP_SLAVE
-            while ( !(LPC_SSP0->SR & SSPSR_RNE) );
-#else
             LPC_SSP0->DR = 0xFF;
             /* Wait until the Busy bit is cleared */
             while ( (LPC_SSP0->SR & (SSPSR_BSY|SSPSR_RNE)) != SSPSR_RNE );
-#endif
-#else
-            while ( !(LPC_SSP0->SR & SSPSR_RNE) );
-#endif
             *buf++ = LPC_SSP0->DR;
         }
         else if ( portnum == 1 )
