@@ -9,6 +9,7 @@ TARGET = eFirmata
 # Objects that must be built in order to link
 OBJECTS = startup.o
 OBJECTS += CMSIS/system_LPC17xx.o
+OBJECTS += peripheralClocks.o
 OBJECTS += uart.o
 OBJECTS += debug.o
 OBJECTS += firmataProtocol.o
@@ -17,6 +18,7 @@ OBJECTS += ssp.o
 OBJECTS += adc.o
 OBJECTS += dac.o
 OBJECTS += pwm.o
+OBJECTS += timer.o
 OBJECTS += main.o 
 
 

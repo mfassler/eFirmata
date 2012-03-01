@@ -20,6 +20,7 @@
 ****************************************************************************/
 #include <LPC17xx.h>
 #include <type.h>
+#include "peripheralClocks.h"
 #include "uart.h"
 #include "debug.h"
 
@@ -161,44 +162,12 @@ void UART1_IRQHandler (void)
 uint32_t UARTInit(uint32_t PortNum, uint32_t baudrate)
 {
     uint32_t Fdiv;
-    uint32_t pclkdiv, pclk;
-
-    switch(PortNum)
-    {
-        case 0:
-          pclkdiv = (LPC_SC->PCLKSEL0 >> 6) & 0x03;
-          break;
-        case 1:
-	      pclkdiv = (LPC_SC->PCLKSEL0 >> 8) & 0x03;
-          break;
-        default:
-          pclkdiv = 0;
-          break;
-    }
-
-    /* By default, the PCLKSELx value is zero, thus, the PCLK for
-    all the peripherals is 1/4 of the SystemCoreClock. */
-    switch ( pclkdiv )
-    {
-        case 0x00:
-        default:
-          pclk = SystemCoreClock/4;
-          break;
-        case 0x01:
-          pclk = SystemCoreClock;
-          break; 
-        case 0x02:
-          pclk = SystemCoreClock/2;
-          break; 
-        case 0x03:
-          pclk = SystemCoreClock/8;
-          break;
-    }
-
-    Fdiv = ( pclk / 16 ) / baudrate;  /*baud rate */
+    uint32_t pclk;
 
     if ( PortNum == 0 )
     {
+        pclk = getPeripheralClock(PCLK_UART0);
+        Fdiv = ( pclk / 16 ) / baudrate;
         LPC_PINCON->PINSEL0 &= ~0x000000F0;
         LPC_PINCON->PINSEL0 |= 0x00000050;  /* RXD0 on P0.3; TXD0 on P0.2 */
 
@@ -214,6 +183,8 @@ uint32_t UARTInit(uint32_t PortNum, uint32_t baudrate)
     }
     else if ( PortNum == 1 )
     {
+        pclk = getPeripheralClock(PCLK_UART1);
+        Fdiv = ( pclk / 16 ) / baudrate;
         LPC_PINCON->PINSEL0 &= ~0xC0000000;
         LPC_PINCON->PINSEL0 |= 0x40000000;  /* TXD1 on P0.15 */
         LPC_PINCON->PINSEL1 &= ~0x00000003;
@@ -231,6 +202,8 @@ uint32_t UARTInit(uint32_t PortNum, uint32_t baudrate)
     }
     else if ( PortNum == 2 )
     {
+        pclk = getPeripheralClock(PCLK_UART2);
+        Fdiv = ( pclk / 16 ) / baudrate;
         LPC_SC->PCONP |= (1 << 24);
         LPC_PINCON->PINSEL0 &= ~0x00F00000;
         LPC_PINCON->PINSEL0 |= 0x00500000;  /* RXD2 on P0.11; TXD2 on P0.10 */
@@ -242,7 +215,7 @@ uint32_t UARTInit(uint32_t PortNum, uint32_t baudrate)
         LPC_UART2->FCR = 0x07; /* Enable and reset TX and RX FIFO. */
 
 //        NVIC_EnableIRQ(UART2_IRQn);
-//        LPC_UART2->IER = IER_RBR | IER_THRE | IER_RLS;	/* Enable UART1 interrupt */
+//        LPC_UART2->IER = IER_RBR | IER_THRE | IER_RLS;	/* Enable UART2 interrupt */
         return (TRUE);
     }
 

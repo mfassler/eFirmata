@@ -20,15 +20,15 @@
 
 
 #include "LPC17xx.h"
-#include "type.h"
+#include <type.h>
+
 #include "emac.h"
 #include "debug.h"
 #include "firmataProtocol.h"
 
 #include "MAC_ADDRESSES.h"
 
-
-void delay (uint32_t);
+#include "timer.h"
 
 static unsigned short *rptr;
 static unsigned short *tptr;
@@ -171,7 +171,7 @@ void Init_EMAC(void)
     LPC_EMAC->MAC1 = MAC1_RES_TX | MAC1_RES_MCS_TX | MAC1_RES_RX | MAC1_RES_MCS_RX |
               MAC1_SIM_RES | MAC1_SOFT_RES;
     LPC_EMAC->Command = CR_REG_RES | CR_TX_RES | CR_RX_RES;
-    delay(100);
+    delayMs(0, 100);
 
     LPC_GPIO1->FIOPIN = (1<<20);
     /* Initialize MAC control registers. */
@@ -186,7 +186,7 @@ void Init_EMAC(void)
 
     /* Reset Reduced MII Logic. */ 
     LPC_EMAC->MCFG = MCFG_CLK_DIV20 | MCFG_RES_MII;
-    delay(100);
+    delayMs(0, 100);
     LPC_EMAC->MCFG = MCFG_CLK_DIV20;
 
     /* Put the DP83848C in reset mode */

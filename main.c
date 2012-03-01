@@ -7,6 +7,7 @@
 #include "adc.h"
 #include "dac.h"
 #include "pwm.h"
+#include "timer.h"
 
 extern volatile uint16_t ADCValue[ADC_NUM];
 extern volatile uint32_t ADCIntDone;
@@ -81,29 +82,10 @@ void setAddressesAndProtocol(void)
 
 
 volatile uint32_t current_time;
-volatile int doJiffyAction = 0;
-void jiffyAction (void);
-
-void SysTick_Handler (void)
-{
-    current_time++;
-    if (doJiffyAction)
-        jiffyAction();
-}
-
-void delay (uint32_t interval)
-{
-    uint32_t start = current_time;
-    while (current_time - start < interval);
-}
 
 void jiffyAction (void)
 {
     // Once every 10 ms we send sensor data to the PC.
-
-    // For now, we'll only run once every 16 jiffies:
-//    if ((current_time & 0xf) != 0)
-//        return;
 
     mySensorPacket.adcVal = ADCValue[5];
 
@@ -120,6 +102,12 @@ void jiffyAction (void)
 }
 
 
+void SysTick_Handler (void)
+{
+    current_time++;
+    jiffyAction();
+}
+
 
 int main() {
     // Enable our blinky LEDs:
@@ -131,9 +119,6 @@ int main() {
     debug("...init done.");
 
     LPC_GPIO1->FIOSET = (1 << 20);  // Turn blinky LED #2
-
-    // Start the 100 Hz timer:
-    SysTick_Config (SystemCoreClock / 100);
 
     // Initialize Ethernet:
     Init_EMAC();
@@ -164,15 +149,15 @@ int main() {
 
     // ***** END:  Initialize peripherials
 
-
-    doJiffyAction = 1;
+    // Start the 100 Hz timer:
+    SysTick_Config (SystemCoreClock / 100);
 
     while (1)
     {
-        delay(12);
+        delayMs(0, 120);
         LPC_GPIO1->FIOSET = (1 << 20) | (1<<23);  // heartbeat
 
-        delay(12);
+        delayMs(0, 120);
         LPC_GPIO1->FIOCLR = (1 << 20) | (1<<23);  // heartbeat
     }
 }

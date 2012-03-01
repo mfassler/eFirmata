@@ -19,8 +19,11 @@
  * warranty that such application will be suitable for the specified
  * use without further testing or modification.
 ****************************************************************************/
+
 #include <LPC17xx.h>
-#include "type.h"
+#include <type.h>
+#include "peripheralClocks.h"
+
 #include "adc.h"
 #include "debug.h"
 #include "emac.h"
@@ -102,7 +105,7 @@ void ADC_IRQHandler (void)
 
 void ADCInit(void)
 {
-    uint32_t i, pclkdiv, pclk;
+    uint32_t i, pclk;
 
     whichFrame = 0;
     whichByteInPayload = 0;
@@ -123,31 +126,10 @@ void ADCInit(void)
     LPC_PINCON->PINMODE3 &= ~0xC0000000;
     LPC_PINCON->PINMODE3 |= 0x80000000;
 
+    pclk = getPeripheralClock(PCLK_ADC);
 
-    /* By default, the PCLKSELx value is zero, thus, the PCLK for
-    all the peripherals is 1/4 of the SystemFrequency. */
-    /* Bit 24~25 is for ADC */
-    pclkdiv = (LPC_SC->PCLKSEL0 >> 24) & 0x03;
-    switch (pclkdiv)
-    {
-	    case 0x00:
-    	default:
-	      pclk = SystemCoreClock/4;
-          break;
-    	case 0x01:
-          pclk = SystemCoreClock;
-          break; 
-        case 0x02:
-          pclk = SystemCoreClock/2;
-          break; 
-        case 0x03:
-          pclk = SystemCoreClock/8;
-          break;
-    }
-
-    debugLong("pclk: ", pclk);
     debugLong("SystemCoreClock: ", SystemCoreClock);
-    //debugLong("ADC_Clk: ", ADC_Clk);
+    debugLong("pclk (adc): ", pclk);
 
     LPC_ADC->ADCR = ( 0x01 << 5 ) |  /* SEL=1,select channel 0~7 on ADC0 */
     //    ( ( pclk  / ADC_Clk - 1 ) << 8 ) |  /* CLKDIV = Fpclk / ADC_Clk - 1 */ 

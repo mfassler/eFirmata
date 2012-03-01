@@ -1,6 +1,7 @@
 
 #include <LPC17xx.h>
-#include "type.h"
+#include <type.h>
+
 #include "pwm.h"
 #include "debug.h"
 
