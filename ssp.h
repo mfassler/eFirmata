@@ -101,5 +101,5 @@ extern void SSPReceive( uint32_t portnum, uint8_t *buf, uint32_t Length );
 
 extern void getAccel(uint8_t, uint16_t*, uint16_t*, uint16_t*);
 
-#endif  /* __SSP_H__ */
+#endif  // __SSP_H__
 

@@ -1,3 +1,10 @@
+/*
+ *  Copyright 2012, Mark Fassler
+ *  Licensed under the GPLv3
+ *
+ */
+
+
 #include <LPC17xx.h>
 #include "debug.h"
 #include "uart.h"

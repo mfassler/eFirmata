@@ -20,9 +20,6 @@
 #ifndef __PWM_H 
 #define __PWM_H
 
-//#define PWM_CYCLE		1200
-//#define PWM_OFFSET		200
-
 #define MR0_INT			(1 << 0)
 #define MR1_INT			(1 << 1)
 #define MR2_INT			(1 << 2)
@@ -82,7 +79,5 @@ extern void PWM_Set(uint32_t cycle, uint32_t offset );
 extern void PWM_Start(void);
 extern void PWM_Stop(void);
 
-#endif /* end __PWM_H */
-/****************************************************************************
-**                            End Of File
-****************************************************************************/
+#endif // __PWM_H
+
