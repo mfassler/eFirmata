@@ -12,20 +12,10 @@
         George 2009.05.27
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 
 #ifndef __EMAC_H
 #define __EMAC_H
 
-#define MYMAC_1         0x1E            /* our ethernet (MAC) address        */
-#define MYMAC_2         0x30            /* (MUST be unique in LAN!)          */
-#define MYMAC_3         0x6c
-#define MYMAC_4         0xa2
-#define MYMAC_5         0x45
-#define MYMAC_6         0x5e
 
 /* EMAC Memory Buffer configuration for 16K Ethernet RAM. */
 #define NUM_RX_FRAG         4           /* Num.of RX Fragments 4*1536= 6.0kB */
@@ -320,13 +310,7 @@ unsigned int   Rdy4Tx(void);
 
 void ENET_IRQHandler(void);
 
+void ethernetPleaseSend(unsigned short, unsigned short);
 
 #endif
 
-/*----------------------------------------------------------------------------
- * end of file
- *---------------------------------------------------------------------------*/
-
-#ifdef __cplusplus
-}
-#endif

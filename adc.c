@@ -26,9 +26,18 @@
 
 #include "adc.h"
 #include "debug.h"
+
 #include "emac.h"
+#include "MAC_ADDRESSES.h"
+#include "firmataProtocol.h"
+
 
 volatile uint16_t ADCValue[ADC_NUM];
+
+uint16_t *ADCValueMSB;
+
+uint16_t *ADC5MSB;
+
 volatile uint32_t ADCIntDone = 0;
 volatile uint32_t BurstCounter = 0;
 volatile uint32_t OverRunCounter = 0;
@@ -36,15 +45,26 @@ volatile uint32_t OverRunCounter = 0;
 volatile uint16_t whichFrame;
 volatile uint16_t whichByteInPayload;
 
-extern char bigEtherFrame[2][6+6+2+1024+4];
+extern struct bigEtherFrame *bigEtherFrameA;
+extern struct bigEtherFrame *bigEtherFrameB;
 
 void ADC_IRQHandler (void) 
 {
     uint32_t regVal;
     //volatile uint32_t dummy;
     uint16_t previousFrame;
-    uint16_t frameIdx;
+    //char *tmp;
     //int i;
+
+    static struct bigEtherFrame *aFrame;
+    if (whichFrame == 0)
+    {
+        aFrame = bigEtherFrameA;
+    }
+    else
+    {
+        aFrame = bigEtherFrameB;
+    }
 
     regVal = LPC_ADC->ADSTAT;   /* Read ADC will clear the interrupt */
 
@@ -71,34 +91,29 @@ void ADC_IRQHandler (void)
 
     if ( regVal & (1<<5) )
     {
-        ADCValue[5] = ( LPC_ADC->ADDR5 >> 4 ) & 0xFFF;
-//        debugLong("ADCValue[5]: ", ADCValue[5]);
+        ADCValue[5] = LPC_ADC->ADDR5 & 0xFFF0;
 
-        frameIdx = whichByteInPayload + 6 + 6 + 2;
-        bigEtherFrame[whichFrame][frameIdx] = (ADCValue[5] & 0xFF0 ) >> 4;
-//        whichByteInPayload++;
+        aFrame->data[whichByteInPayload] = ADCValue[5];
+        whichByteInPayload++;
 
-
-/*        if (whichByteInPayload == 256)
+        if (whichByteInPayload == 256)
         {
             whichByteInPayload = 0;
             previousFrame = whichFrame;
-            whichFrame++;
-            if (whichFrame == 2)
+            if (whichFrame == 0)
+            {
+                whichFrame = 1;
+                ethernetPleaseSend(1, sizeof(struct bigEtherFrame));
+            }
+            else
             {
                 whichFrame = 0;
+                ethernetPleaseSend(2, sizeof(struct bigEtherFrame));
             }
-            RequestSend(6 + 6+ 2 + 256 + 4);
-            CopyToFrame_EMAC( (unsigned short*) bigEtherFrame[previousFrame], 6+6+2+256+4);
-        }*/
+        }
     }
 
-
-
 //    LPC_ADC->ADCR &= ~(0x7<<24);    /* stop ADC now */ 
-//    ADCIntDone = 1;
-
-//    ADCRead(5);
     return;
 }
 

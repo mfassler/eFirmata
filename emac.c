@@ -132,21 +132,22 @@ void rx_descr_init (void)
 
 // Keil: function added to initialize Tx Descriptors
 void tx_descr_init (void) {
-  unsigned int i;
+    unsigned int i;
 
-  for (i = 0; i < NUM_TX_FRAG; i++) {
-    TX_DESC_PACKET(i) = TX_BUF(i);
-    TX_DESC_CTRL(i)   = 0;
-    TX_STAT_INFO(i)   = 0;
-  }
+    for (i = 0; i < NUM_TX_FRAG; i++)
+    {
+        TX_DESC_PACKET(i) = TX_BUF(i);
+        TX_DESC_CTRL(i)   = 0;
+        TX_STAT_INFO(i)   = 0;
+    }
 
-  /* Set EMAC Transmit Descriptor Registers. */
-  LPC_EMAC->TxDescriptor    = TX_DESC_BASE;
-  LPC_EMAC->TxStatus        = TX_STAT_BASE;
-  LPC_EMAC->TxDescriptorNumber = NUM_TX_FRAG-1;
+    /* Set EMAC Transmit Descriptor Registers. */
+    LPC_EMAC->TxDescriptor    = TX_DESC_BASE;
+    LPC_EMAC->TxStatus        = TX_STAT_BASE;
+    LPC_EMAC->TxDescriptorNumber = NUM_TX_FRAG-1;
 
-  /* Tx Descriptors Point to 0 */
-  LPC_EMAC->TxProduceIndex  = 0;
+    /* Tx Descriptors Point to 0 */
+    LPC_EMAC->TxProduceIndex  = 0;
 }
 
 
@@ -417,24 +418,41 @@ void WriteFrame_EMAC(unsigned short Data)
 
 void CopyToFrame_EMAC(void *Source, unsigned int Size)
 {
-  unsigned short * piSource;
-  unsigned int idx;
+    unsigned short * piSource;
+    unsigned int idx;
 
-  piSource = Source;
-  Size = (Size + 1) & 0xFFFE;    // round Size up to next even number
-//  debugWord("Size: ", Size);
+    piSource = Source;
+    Size = (Size + 1) & 0xFFFE;    // round Size up to next even number
 
-  while (Size > 0) {
-    WriteFrame_EMAC(*piSource++);
-    Size -= 2;
-//    debugWord("Size: ", Size);
-  }
+    while (Size > 0)
+    {
+        WriteFrame_EMAC(*piSource++);
+        Size -= 2;
+    }
 
-  idx = LPC_EMAC->TxProduceIndex;
-  if (++idx == NUM_TX_FRAG)
-  { 
-    idx = 0;
-  }
-  LPC_EMAC->TxProduceIndex = idx;
+    idx = LPC_EMAC->TxProduceIndex + 1;
+    if (idx == NUM_TX_FRAG)
+    { 
+        idx = 0;
+    }
+    LPC_EMAC->TxProduceIndex = idx;
 }
+
+void ethernetPleaseSend(unsigned short whichBuffer, unsigned short frameSize)
+{
+    unsigned int idx;
+
+    idx = LPC_EMAC->TxProduceIndex + 1;
+    //idx++;
+    if (idx == NUM_TX_FRAG)
+    { 
+        idx = 0;
+    }
+    TX_DESC_CTRL(idx) = frameSize | TCTRL_LAST;
+    TX_DESC_PACKET(idx) = TX_BUF(whichBuffer);
+    LPC_EMAC->TxProduceIndex = idx;
+}
+
+
+
 

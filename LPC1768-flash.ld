@@ -21,8 +21,8 @@ MEMORY {
     /* Local static ram, 32K */
   ram0   (rwx) : ORIGIN = 0x10000000, LENGTH =  32K
     /* AHB SRAM, banks 0 and 1 */
-  ram1   (rwx) : ORIGIN = 0x2007C000, LENGTH = 16K
-  ram2   (rwx) : ORIGIN = 0x20080000, LENGTH = 16K
+  ahb0   (rwx) : ORIGIN = 0x2007C000, LENGTH = 16K
+  ahb1   (rwx) : ORIGIN = 0x20080000, LENGTH = 16K
 }
 
 SECTIONS {

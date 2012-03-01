@@ -1,6 +1,6 @@
 
 void parseFrame(char*, unsigned short);
-
+void initOutgoingEthernetPackets(void);
 
 
 struct sensorPacket {
@@ -22,3 +22,12 @@ struct sensorPacket {
     uint32_t fcs;
 };
 
+struct bigEtherFrame {
+    char dest[6];
+    char src[6];
+    char prot[2];
+
+    uint16_t data[256];
+
+    uint32_t fcs;
+};
