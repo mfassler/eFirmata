@@ -1,3 +1,9 @@
+/*
+ *  Copyright 2012, Mark Fassler
+ *  Licensed under the GPLv3
+ *
+ */
+
 
 #include <LPC17xx.h>
 #include "uart.h"
@@ -9,12 +15,9 @@
 #include "pwm.h"
 #include "timer.h"
 
-extern volatile uint16_t ADCValue[ADC_NUM];
-extern volatile uint32_t ADCIntDone;
-extern volatile uint32_t OverRunCounter;
-
 #include "firmataProtocol.h"
 
+extern volatile uint16_t ADCValue[ADC_NUM];
 extern struct sensorPacket *mySensorPacket;
 
 volatile uint32_t current_time;
@@ -23,7 +26,7 @@ void jiffyAction (void)
 {
     // Once every 10 ms we send sensor data to the PC.
 
-    mySensorPacket->adcVal = ADCValue[5];
+    mySensorPacket->adcVal = ADCValue[4];   // bend sensor for right elbow
 
     getAccel(0, &(mySensorPacket->xAccel0), 
                 &(mySensorPacket->yAccel0),
