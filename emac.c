@@ -31,13 +31,6 @@
 #include "timer.h"
 
 static unsigned short *rptr;
-static unsigned short *tptr;
-
-/*
-#define MDIO    0x00000200
-#define MDC     0x00000100
-*/
-
 
 
 void ENET_IRQHandler (void)
@@ -53,18 +46,17 @@ void ENET_IRQHandler (void)
         rxLen = StartReadFrame();
         debugWord("rxLen: ", rxLen);
         CopyFromFrame_EMAC(rxBuffer, rxLen);
-        //debug(rxBuffer);
         EndReadFrame();
         parseFrame( (char *) rxBuffer, rxLen);
     }
 
     LPC_EMAC->IntClear  = 0xFFFF;
-
 }
 
 
 
-static void write_PHY (unsigned int PhyReg, unsigned short Value) {
+static void write_PHY (unsigned int PhyReg, unsigned short Value)
+{
     /* Write a data 'Value' to PHY register 'PhyReg'. */
     unsigned int tout;
 
@@ -84,7 +76,8 @@ static void write_PHY (unsigned int PhyReg, unsigned short Value) {
 }
 
 
-static unsigned short read_PHY (unsigned int PhyReg) {
+static unsigned short read_PHY (unsigned int PhyReg)
+{
     /* Read a PHY register 'PhyReg'. */
     unsigned int tout, val;
 
@@ -105,54 +98,44 @@ static unsigned short read_PHY (unsigned int PhyReg) {
     }
     LPC_EMAC->MCMD = 0;
     val = LPC_EMAC->MRDD;
-    return (val);
+    return val;
 }
 
 // Keil: function added to initialize Rx Descriptors
-void rx_descr_init (void)
+void rxDescriptorInit (void)
 {
-  unsigned int i;
+    unsigned int i;
 
-  for (i = 0; i < NUM_RX_FRAG; i++) {
-    RX_DESC_PACKET(i)  = RX_BUF(i);
-    RX_DESC_CTRL(i)    = RCTRL_INT | (ETH_FRAG_SIZE-1);
-    RX_STAT_INFO(i)    = 0;
-    RX_STAT_HASHCRC(i) = 0;
-  }
+    for (i = 0; i < NUM_RX_FRAG; i++)
+    {
+        RX_DESC_PACKET(i)  = RX_BUF(i);
+        RX_DESC_CTRL(i)    = RCTRL_INT | (ETH_FRAG_SIZE-1);
+        RX_STAT_INFO(i)    = 0;
+        RX_STAT_HASHCRC(i) = 0;
+    }
 
-  /* Set EMAC Receive Descriptor Registers. */
-  LPC_EMAC->RxDescriptor    = RX_DESC_BASE;
-  LPC_EMAC->RxStatus        = RX_STAT_BASE;
-  LPC_EMAC->RxDescriptorNumber = NUM_RX_FRAG-1;
+    /* Set EMAC Receive Descriptor Registers. */
+    LPC_EMAC->RxDescriptor    = RX_DESC_BASE;
+    LPC_EMAC->RxStatus        = RX_STAT_BASE;
+    LPC_EMAC->RxDescriptorNumber = NUM_RX_FRAG-1;
 
-  /* Rx Descriptors Point to 0 */
-  LPC_EMAC->RxConsumeIndex  = 0;
+    /* Rx Descriptors Point to 0 */
+    LPC_EMAC->RxConsumeIndex  = 0;
 }
 
 
-// Keil: function added to initialize Tx Descriptors
-void tx_descr_init (void) {
-    unsigned int i;
-
-    for (i = 0; i < NUM_TX_FRAG; i++)
-    {
-        TX_DESC_PACKET(i) = TX_BUF(i);
-        TX_DESC_CTRL(i)   = 0;
-        TX_STAT_INFO(i)   = 0;
-    }
-
-    /* Set EMAC Transmit Descriptor Registers. */
+void txDescriptorInit(void)
+{
+    // How do we find our outgoing buffers?
     LPC_EMAC->TxDescriptor    = TX_DESC_BASE;
     LPC_EMAC->TxStatus        = TX_STAT_BASE;
     LPC_EMAC->TxDescriptorNumber = NUM_TX_FRAG-1;
 
-    /* Tx Descriptors Point to 0 */
+    // Starting off at 0:
     LPC_EMAC->TxProduceIndex  = 0;
 }
 
 
-// configure port-pins for use with LAN-controller,
-// reset it and send the configuration-sequence
 
 void Init_EMAC(void)
 {
@@ -278,8 +261,8 @@ void Init_EMAC(void)
     LPC_EMAC->SA2 = (myAddress[1] << 8) | myAddress[0];
 
     /* Initialize Tx and Rx DMA Descriptors */
-    rx_descr_init ();
-    tx_descr_init ();
+    rxDescriptorInit();
+    txDescriptorInit();
 
     /* Receive Broadcast and Perfect Match Packets */
     LPC_EMAC->RxFilterCtrl = RFC_BCAST_EN | RFC_PERFECT_EN;
@@ -295,8 +278,8 @@ void Init_EMAC(void)
     LPC_EMAC->MAC1     |= MAC1_REC_EN;
 }
 
-// reads a word in little-endian byte order from RX_BUFFER
 
+// reads a word in little-endian byte order from RX_BUFFER
 unsigned short ReadFrame_EMAC(void)
 {
     return (*rptr++);
@@ -314,13 +297,12 @@ unsigned short SwapBytes(unsigned short Data)
 // reads a word in big-endian byte order from RX_FRAME_PORT
 // (useful to avoid permanent byte-swapping while reading
 // TCP/IP-data)
-
 unsigned short ReadFrameBE_EMAC(void)
 {
-  unsigned short ReturnValue;
+    unsigned short ReturnValue;
 
-  ReturnValue = SwapBytes (*rptr++);
-  return (ReturnValue);
+    ReturnValue = SwapBytes(*rptr++);
+    return (ReturnValue);
 }
 
 
@@ -328,131 +310,92 @@ unsigned short ReadFrameBE_EMAC(void)
 // NOTES: * an odd number of byte may only be transfered
 //          if the frame is read to the end!
 //        * MCU-memory MUST start at word-boundary
-
 void CopyFromFrame_EMAC(void *Dest, unsigned short Size)
 {
-  unsigned short * piDest;                       // Keil: Pointer added to correct expression
+    unsigned short * piDest;    // Keil: Pointer added to correct expression
 
-  piDest = Dest;                                 // Keil: Line added
-  while (Size > 1) {
-    *piDest++ = ReadFrame_EMAC();
-    Size -= 2;
-  }
+    piDest = Dest;              // Keil: Line added
+    while (Size > 1)
+    {
+        *piDest++ = ReadFrame_EMAC();
+        Size -= 2;
+    }
   
-  if (Size) {                                         // check for leftover byte...
-    *(unsigned char *)piDest = (char)ReadFrame_EMAC();// the LAN-Controller will return 0
-  }                                                   // for the highbyte
+    if (Size)
+    {                                         // check for leftover byte...
+        *(unsigned char *)piDest = (char)ReadFrame_EMAC(); // the LAN-Controller will return 0
+    }                                                      // for the highbyte
 }
+
 
 // does a dummy read on frame-I/O-port
 // NOTE: only an even number of bytes is read!
-
 void DummyReadFrame_EMAC(unsigned short Size)    // discards an EVEN number of bytes
 {                                                // from RX-fifo
-  while (Size > 1) {
-    ReadFrame_EMAC();
-    Size -= 2;
-  }
+    while (Size > 1)
+    {
+        ReadFrame_EMAC();
+        Size -= 2;
+    }
 }
+
 
 // Reads the length of the received ethernet frame and checks if the 
 // destination address is a broadcast message or not
 // returns the frame length
-unsigned short StartReadFrame(void) {
-  unsigned short RxLen;
-  unsigned int idx;
-
-  idx = LPC_EMAC->RxConsumeIndex;
-  RxLen = (RX_STAT_INFO(idx) & RINFO_SIZE) - 3;
-  rptr = (unsigned short *)RX_DESC_PACKET(idx);
-  return(RxLen);
-}
-
-void EndReadFrame(void) {
-  unsigned int idx;
-
-  /* DMA free packet. */
-  idx = LPC_EMAC->RxConsumeIndex;
-  if (++idx == NUM_RX_FRAG) idx = 0;
-  LPC_EMAC->RxConsumeIndex = idx;
-}
-
-unsigned int CheckFrameReceived(void) {             // Packet received ?
-
-  if (LPC_EMAC->RxProduceIndex != LPC_EMAC->RxConsumeIndex)     // more packets received ?
-    return(1);
-  else 
-    return(0);
-}
-
-// requests space in EMAC memory for storing an outgoing frame
-
-void RequestSend(unsigned short FrameSize)
+unsigned short StartReadFrame(void)
 {
-  unsigned int idx;
-
-  idx  = LPC_EMAC->TxProduceIndex;
-  tptr = (unsigned short *)TX_DESC_PACKET(idx);
-  TX_DESC_CTRL(idx) = FrameSize | TCTRL_LAST;
-}
-
-// check if ethernet controller is ready to accept the
-// frame we want to send
-
-unsigned int Rdy4Tx(void)
-{
-  return (1);   // the ethernet controller transmits much faster
-}               // than the CPU can load its buffers
-
-
-// writes a word in little-endian byte order to TX_BUFFER
-void WriteFrame_EMAC(unsigned short Data)
-{
-  *tptr++ = Data;
-}
-
-// copies bytes from MCU-memory to frame port
-// NOTES: * an odd number of byte may only be transfered
-//          if the frame is written to the end!
-//        * MCU-memory MUST start at word-boundary
-
-void CopyToFrame_EMAC(void *Source, unsigned int Size)
-{
-    unsigned short * piSource;
+    unsigned short RxLen;
     unsigned int idx;
 
-    piSource = Source;
-    Size = (Size + 1) & 0xFFFE;    // round Size up to next even number
-
-    while (Size > 0)
-    {
-        WriteFrame_EMAC(*piSource++);
-        Size -= 2;
-    }
-
-    idx = LPC_EMAC->TxProduceIndex + 1;
-    if (idx == NUM_TX_FRAG)
-    { 
-        idx = 0;
-    }
-    LPC_EMAC->TxProduceIndex = idx;
+    idx = LPC_EMAC->RxConsumeIndex;
+    RxLen = (RX_STAT_INFO(idx) & RINFO_SIZE) - 3;
+    rptr = (unsigned short *)RX_DESC_PACKET(idx);
+    return(RxLen);
 }
+
+void EndReadFrame(void)
+{
+    unsigned int idx;
+
+    /* DMA free packet. */
+    idx = LPC_EMAC->RxConsumeIndex;
+    if (++idx == NUM_RX_FRAG)
+        idx = 0;
+
+    LPC_EMAC->RxConsumeIndex = idx;
+}
+
+
+unsigned int CheckFrameReceived(void) // Packet received ?
+{             
+
+    if (LPC_EMAC->RxProduceIndex != LPC_EMAC->RxConsumeIndex)     // more packets received ?
+        return 1;
+    else 
+        return 0;
+}
+
 
 void ethernetPleaseSend(unsigned short whichBuffer, unsigned short frameSize)
 {
     unsigned int idx;
 
+    // What is the next buffer index?
     idx = LPC_EMAC->TxProduceIndex + 1;
-    //idx++;
+
     if (idx == NUM_TX_FRAG)
     { 
         idx = 0;
     }
-    TX_DESC_CTRL(idx) = frameSize | TCTRL_LAST;
+
+    // Point the way to the buffer:
+    TX_DESC_CTRL(idx)   = 0;
+    TX_STAT_INFO(idx)   = 0;
     TX_DESC_PACKET(idx) = TX_BUF(whichBuffer);
+    TX_DESC_CTRL(idx) = frameSize | TCTRL_LAST;
+
+    // EMAC, you have work do do:
     LPC_EMAC->TxProduceIndex = idx;
 }
-
-
-
 
