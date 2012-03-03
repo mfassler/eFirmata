@@ -28,6 +28,9 @@ void ADC_IRQHandler (void)
 {
     uint32_t regVal;
 
+    static uint32_t fourSamples[ADC_NUM][4];
+    static uint8_t whichSample = 0;
+
     static struct bigEtherFrame *aFrame;
     if (whichFrame == 0)
     {
@@ -47,23 +50,32 @@ void ADC_IRQHandler (void)
 
     if ( regVal & (1<<5) )
     {
-        ADCValue[5] = LPC_ADC->ADDR5 & 0xFFF0;
+        fourSamples[5][whichSample] = LPC_ADC->ADDR5 & 0xFFF0;
+        whichSample++;
 
-        aFrame->data[whichByteInPayload] = ADCValue[5];
-        whichByteInPayload++;
-
-        if (whichByteInPayload == 256)
+        if(whichSample == 4)
         {
-            whichByteInPayload = 0;
-            if (whichFrame == 0)
+            whichSample = 0;
+
+            // the right-shift by 2 is the same as divide by 4
+            ADCValue[5] = (fourSamples[5][0] +fourSamples[5][1] + fourSamples[5][2] + fourSamples[5][3]) >> 2;
+
+            aFrame->data[whichByteInPayload] = ADCValue[5];
+            whichByteInPayload++;
+
+            if (whichByteInPayload == 256)
             {
-                whichFrame = 1;
-                ethernetPleaseSend(1, sizeof(struct bigEtherFrame));
-            }
-            else
-            {
-                whichFrame = 0;
-                ethernetPleaseSend(2, sizeof(struct bigEtherFrame));
+                whichByteInPayload = 0;
+                if (whichFrame == 0)
+                {
+                    whichFrame = 1;
+                    ethernetPleaseSend(1, sizeof(struct bigEtherFrame));
+                }
+                else
+                {
+                    whichFrame = 0;
+                    ethernetPleaseSend(2, sizeof(struct bigEtherFrame));
+                }
             }
         }
     }
@@ -74,7 +86,9 @@ void ADC_IRQHandler (void)
 
 void ADCInit(void)
 {
-    uint32_t i, pclk;
+    uint32_t i;
+    //uint32_t pclk;
+    uint8_t clkdiv;
 
     whichFrame = 0;
     whichByteInPayload = 0;
@@ -84,7 +98,7 @@ void ADCInit(void)
         ADCValue[i] = 0x0;
     }
 
-    /* Enable CLOCK into ADC controller */
+    // Enable ADC controller:
     LPC_SC->PCONP |= (1 << 12);
 
     // We're only going to use two ADC pins: 
@@ -100,15 +114,26 @@ void ADCInit(void)
     //LPC_PINCON->PINMODE3 |= 0x80000000;  // AD0.5 only
 
 
-    pclk = getPeripheralClock(PCLK_ADC);
+    // The ADC clock rate is:   pclk / (clkdiv + 1)
+    // We're aiming for slightly less than 13 MHz.
+    // It takes 65 clocks for one sample, so the maximum
+    // sample rate is 13MHz / 65 clocks = 200000 SPS.
+    // There's only one real ADC, but the inputs are multiplexed,
+    // so the sample rate is divided amongst each input.  
+    //pclk = getPeripheralClock(PCLK_ADC);
+    // ** Example:
+    //  clkdiv = (pclk / SAMPLE_RATE - 1)
 
-    LPC_ADC->ADCR = (1<<4) | (1<<5) | // Enable channels 4 and 5
-    //    ( ( pclk  / ADC_Clk - 1 ) << 8 ) |  /* CLKDIV = Fpclk / ADC_Clk - 1 */ 
-        ( 5 << 8 ) |   // gives a sample rate of 38461 samples per second
-        ( 1 << 16 ) | 		/* BURST */
-        ( 1 << 21 ) |  		/* PDN = 1, normal operation */
-        ( 0 << 24 ) |  		/* START = 0 A/D conversion stops */
-        ( 0 << 27 );		/* EDGE = 0 (CAP/MAT singal falling,trigger A/D conversion) */ 
+    // With two channels and my divide-by-four trick, this ends ups being very close
+    // to 24400 SPS.  Not sure why:
+    clkdiv = 1;
+
+    LPC_ADC->ADCR = (1<<4) | (1<<5) // Enable channels 4 and 5
+        | ( clkdiv << 8 )
+        | ( 1 << 16 )   // BURST
+        | ( 1 << 21 )   // PDN = 1, normal operation
+        | ( 0 << 24 )   // START = 0 A/D conversion stops
+        | ( 0 << 27 );  // EDGE = 0 (CAP/MAT singal falling,trigger A/D conversion)
 
     NVIC_EnableIRQ(ADC_IRQn);
 
