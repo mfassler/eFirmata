@@ -9,13 +9,17 @@
 
 void parseFrame(char* input, unsigned short inputLen)
 {
-    debugByte("protocol0: ", input[12]);
-    debugByte("protocol1: ", input[13]);
+    unsigned short protocol;
+    protocol = (input[12] << 8) | input[13];
+
+    debugWord("protocol: ", protocol);
+//(unsigned short)input[12]);
+//    debugByte("protocol1: ", input[13]);
 
     if (inputLen < 22)
         return;
 
-    if ((input[12] == 0x08) && (input[13] == 0x1c))  // etherType == eFirmata
+    if ((input[12] == 0x18) && (input[13] == 0x1c))  // etherType == eFirmata
     {
         if ( input[14] == 83 )   // 83 = "S"
         {
