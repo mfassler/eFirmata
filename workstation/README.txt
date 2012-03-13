@@ -11,8 +11,9 @@ eFirmata talks directly to ethernet.  In a typical Linux (/Posix) environment,
 regular users cannot talk directly to ethernet.  So:  firmataBridge.py runs
 as root to talk to the network.  
 
-eFirmata hopes to learn from the USB protocol.  So the eFirmata protocol is
-divided into three types:  control messages, normal messages, fast messages.  
+In designing eFirmata, I hope to learn from the USB protocol.  So the eFirmata
+protocol is divided into three types:  control messages, normal messages, fast 
+messages.  
 
 So, firmataBridge.py has these connections:
 
