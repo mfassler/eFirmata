@@ -1,0 +1,31 @@
+
+To build for an ARM processor, we need an ARM cross-compiler.  
+The compiler I use is the open-source ARM GCC compiler from 
+Code Sourcery.  
+
+At the time of this writing, the latest Free, Open-Source version
+seems to be here:  
+
+https://sourcery.mentor.com/sgpp/lite/arm/portal/package8734/public/arm-none-eabi/arm-2011.03-42-arm-none-eabi-i686-pc-linux-gnu.tar.bz2
+
+Untar that package and install it to somewhere useful (like /opt).  
+Add the bin directory to your $PATH.  I have this in my 
+.bash_profile:
+
+PATH=$PATH:/opt/arm-2011.03/bin
+export PATH
+
+
+--------------------------------
+
+Installing to mbed:
+
+When you connect your PC to the mbed via USB, the mbed looks like a 
+USB drive to the PC.  Simply copy the eFirmata.bin file into that 
+USB drive.  (I also delete any other .bin files that are there -- I 
+don't know what the mbed does if there are multiple .bin files to 
+choose from.)  
+
+After the file is copied, unmount the drive and press the reset 
+button on the mbed.  Easy as that.  
+
