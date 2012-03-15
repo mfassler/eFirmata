@@ -301,6 +301,7 @@
 // prototypes
 void Init_EMAC(void);
 void ethernetPleaseSend(unsigned short, unsigned short);
+void setLinkMode(uint8_t, uint8_t);  // used by enetPHY_Init()
 
 #endif
 

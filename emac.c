@@ -22,62 +22,15 @@
 #include "LPC17xx.h"
 #include <type.h>
 
+#include "ethernetPHY.h"
 #include "emac.h"
-#include "debug.h"
 #include "firmataProtocol.h"
-
 #include "MAC_ADDRESSES.h"
 
+#include "debug.h"
 #include "timer.h"
 
 
-
-
-static void write_PHY (unsigned int PhyReg, unsigned short Value)
-{
-    /* Write a data 'Value' to PHY register 'PhyReg'. */
-    uint32_t tout;
-
-    /* Hardware MII Management for LPC176x devices. */
-    LPC_EMAC->MADR = DP83848C_DEF_ADR | PhyReg;
-    LPC_EMAC->MWTD = Value;
-
-    /* Wait utill operation completed */
-    for (tout = 0; tout < MII_WR_TOUT; tout++)
-    {
-        if ((LPC_EMAC->MIND & MIND_BUSY) == 0)
-        {
-            break;
-        }
-    }
-    if (tout == MII_WR_TOUT)
-        debug("write_PHY timeout");
-    debugWord("write_PHY() tout:", tout);
-}
-
-
-static unsigned short read_PHY (unsigned int PhyReg)
-{
-    /* Read a PHY register 'PhyReg'. */
-    unsigned int tout, val;
-
-    LPC_EMAC->MADR = DP83848C_DEF_ADR | PhyReg;
-    LPC_EMAC->MCMD = MCMD_READ;
-
-    /* Wait until operation completed */
-    for (tout = 0; tout < MII_RD_TOUT; tout++)
-    {
-        if ((LPC_EMAC->MIND & MIND_BUSY) == 0)
-        {
-            break;
-        }
-    }
-    if (tout == MII_RD_TOUT)
-        debug("read_PHY timeout");
-    LPC_EMAC->MCMD = 0;
-    val = LPC_EMAC->MRDD;
-    return val;
-}
 
 // Tell the EMAC where to receive data into DMA memory:
 void rxDescriptorInit (void)
@@ -121,19 +74,47 @@ void txDescriptorInit(void)
 }
 
 
+void setLinkMode(uint8_t speed, uint8_t duplex)
+{
+    // This tells the Ethernet controller (on-board the micro-controller, 
+    // not the PHY) what mode to go into.
+
+    if (speed) // 100 Mbit
+    {
+        debug("100 Mbit");
+        LPC_EMAC->SUPP = SUPP_SPEED;
+    }
+    else // 10 Mbit
+    {
+        debug("10 Mbit");
+        LPC_EMAC->SUPP = 0;
+    }
+
+    if (duplex) // Full-duplex
+    {
+        debug("        Full-duplex");
+        LPC_EMAC->MAC2    |= MAC2_FULL_DUP;
+        LPC_EMAC->Command |= CR_FULL_DUP;
+        LPC_EMAC->IPGT     = IPGT_FULL_DUP;
+    }
+    else  // Half-duplex
+    {
+        debug("        Half-duplex");
+        LPC_EMAC->IPGT = IPGT_HALF_DUP;
+    }
+}
+
+
 
 void Init_EMAC(void)
 {
-    unsigned int regv, id1, id2;
-    uint32_t tout;
     const char myAddress[] = SELF_ADDR;
-
-    LPC_GPIO1->FIOPIN = (1<<18); // Blinky LED #1
 
     // Power Up the EMAC controller.
     LPC_SC->PCONP |= (0x1<<30);
 
-  
+    LPC_GPIO1->FIOPIN = (1<<18); // Blinky LED #1
+
     LPC_PINCON->PINSEL2 = 0x50150105;
     LPC_PINCON->PINSEL3 &= ~0x0000000F;
     LPC_PINCON->PINSEL3 |= 0x00000005;
@@ -161,110 +142,7 @@ void Init_EMAC(void)
     delayMs(0, 100);
     LPC_EMAC->MCFG = MCFG_CLK_DIV20;
 
-    /* Put the DP83848C in reset mode */
-    write_PHY (PHY_REG_BMCR, 0x8000);
-
-    /* Wait for hardware reset to end. */
-    for (tout = 0; tout < 0x100000; tout++) 
-    {
-        regv = read_PHY (PHY_REG_BMCR);
-        if (!(regv & 0x8000))  // Reset complete
-        {
-            debug("Reset complete");
-            break;
-        }
-    }
-    debugWord("PHY_REG_BMCR: ", regv);
-
-    LPC_GPIO1->FIOPIN = (1<<21); // Blinky LED #3
-
-    /* Check if this is a DP83848C PHY. */
-    id1 = read_PHY (PHY_REG_IDR1);
-    debugWord("id1: ", id1);
-    id2 = read_PHY (PHY_REG_IDR2);
-    debugWord("id2: ", id2);
-    //if (((id1 << 16) | (id2 & 0xFFF0)) == DP83848C_ID) 
-    //if (((id1 << 16) | (id2 & 0xFFF0)) == LAN8720_ID) 
-    if ( 0 ) 
-    {
-        //debug("This is a DP-83848");
-        debug("This is a LAN-8720.  Doing auto-negotiation:...");
-        /* Configure the PHY device */
-
-        /* Use autonegotiation about the link speed. */
-        write_PHY (PHY_REG_BMCR, PHY_AUTO_NEG);
-
-        /* Wait to complete Auto_Negotiation. */
-        for (tout = 0; tout < 0x100000; tout++)
-        {
-            regv = read_PHY (PHY_REG_BMSR);
-            if (regv & 0x0020) // Autonegotiation Complete. 
-            {
-                debugWord("PHY_REG_BMSR: ", regv);
-                debug("auto-neg complete");
-                break;
-            }
-            if ((tout & 0x00004000))
-            {
-                LPC_GPIO1->FIOPIN = 0x00;
-            }
-            else
-            {
-                LPC_GPIO1->FIOPIN = (1<<21); // Blinky LED #3
-            }
-        }
-        if (tout == 0x100000)
-            debug("auto-neg timout");
-        debugLong("PHY_AUTO_NEG tout: ", tout);
-    }
-
-    LPC_GPIO1->FIOPIN = (1<<23); // Blinky LED #4
-
-    /* Check the link status. */
-    for (tout = 0; tout < 0x10000; tout++)
-    {
-        regv = read_PHY (PHY_REG_STS);
-        if (regv & 0x0001) // Link is on
-        {
-            debugWord("PHY_REG_STS: ", regv);
-            debug("got link");
-            break;
-        }
-        if ((tout & 0x00004000))
-        {
-            LPC_GPIO1->FIOPIN = 0x00;
-        }
-        else
-        {
-            LPC_GPIO1->FIOPIN = (1<<23); // Blinky LED #4
-        }
-    }
-
-    LPC_GPIO1->FIOPIN = (1<<18); // Blinky LED #1
-
-    if (regv & 0x0004) // Full duplex is enabled. 
-    {
-        LPC_EMAC->MAC2    |= MAC2_FULL_DUP;
-        LPC_EMAC->Command |= CR_FULL_DUP;
-        LPC_EMAC->IPGT     = IPGT_FULL_DUP;
-    }
-    else // Half duplex
-    {
-      LPC_EMAC->IPGT = IPGT_HALF_DUP;
-    }
-
-    if (regv & 0x0002) // 10MBit 
-    {
-        LPC_EMAC->SUPP = 0;
-        debug("10 mbit");
-    }
-    else // 100MBit
-    {
-        LPC_EMAC->SUPP = SUPP_SPEED;
-        debug("100 mbit");
-    }
-
-    LPC_GPIO1->FIOPIN = (1<<20); // Blinky LED #2
+    enetPHY_Init();  // blinks LED#3, ends on LED#4
 
     /* Set the Ethernet MAC Address registers */
     LPC_EMAC->SA0 = (myAddress[5] << 8) | myAddress[4];
@@ -274,7 +152,6 @@ void Init_EMAC(void)
     /* Initialize Tx and Rx DMA Descriptors */
     rxDescriptorInit();
     txDescriptorInit();
-    LPC_GPIO1->FIOPIN = (1<<21); // Blinky LED #3
 
     /* Receive Broadcast and Perfect Match Packets */
     LPC_EMAC->RxFilterCtrl = RFC_BCAST_EN | RFC_PERFECT_EN;
@@ -285,11 +162,11 @@ void Init_EMAC(void)
     /* Reset all interrupts */
     LPC_EMAC->IntClear  = 0xFFFF;
 
-    LPC_GPIO1->FIOPIN = (1<<23); // Blinky LED #4
-
     /* Enable receive and transmit mode of MAC Ethernet core */
     LPC_EMAC->Command  |= (CR_RX_EN | CR_TX_EN);
     LPC_EMAC->MAC1     |= MAC1_REC_EN;
+
+    LPC_GPIO1->FIOPIN = (1<<18); // Blinky LED #1
 }
 
 

@@ -13,6 +13,7 @@ OBJECTS += peripheralClocks.o
 OBJECTS += uart.o
 OBJECTS += debug.o
 OBJECTS += firmataProtocol.o
+OBJECTS += ethernetPHY.o
 OBJECTS += emac.o
 OBJECTS += ssp.o
 OBJECTS += adc.o
