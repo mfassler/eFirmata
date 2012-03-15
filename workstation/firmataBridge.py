@@ -75,7 +75,7 @@ class OutDataToUser:
         self.socket = None
         self.socketFast = None
 
-    def trySend(self, packet):
+    def tryToSend(self, packet):
         try:
             self.socket.send(packet)
         except:
@@ -87,6 +87,20 @@ class OutDataToUser:
             else:
                 try:
                     self.socket.send(packet)
+                except:
+                    pass
+    def tryToSendFast(self, packet):
+        try:
+            self.socketFast.send(packet)
+        except:
+            try:
+                self.socketFast = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+                self.socketFast.connect(self.fileNameFast)
+            except:
+                pass
+            else:
+                try:
+                    self.socketFast.send(packet)
                 except:
                     pass
 
@@ -131,9 +145,10 @@ while 1:
                 print "firmataControl:"
             if oneInput == firmata:
                 data, addr = oneInput.recvfrom(1522)
-                unixOut.trySend(data)
+                unixOut.tryToSend(data)
             if oneInput == firmataFast:
-                pass
+                data, addr = oneInput.recvfrom(1522)
+                unixOut.tryToSendFast(data)
     else:  # timeout, no incoming data
         print "bored."
 

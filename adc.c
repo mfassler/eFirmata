@@ -87,7 +87,7 @@ void ADC_IRQHandler (void)
 void ADCInit(void)
 {
     uint32_t i;
-    //uint32_t pclk;
+    uint32_t pclk;
     uint8_t clkdiv;
 
     whichFrame = 0;
@@ -120,7 +120,8 @@ void ADCInit(void)
     // sample rate is 13MHz / 65 clocks = 200000 SPS.
     // There's only one real ADC, but the inputs are multiplexed,
     // so the sample rate is divided amongst each input.  
-    //pclk = getPeripheralClock(PCLK_ADC);
+    pclk = getPeripheralClock(PCLK_ADC);
+    debugLong("ADC's pclk: ", pclk);
     // ** Example:
     //  clkdiv = (pclk / SAMPLE_RATE - 1)
 
