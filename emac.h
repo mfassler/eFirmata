@@ -24,8 +24,8 @@
 
 #define ETH_MAX_FLEN        1536        /* Max. Ethernet Frame Size          */
 
-/* EMAC variables located in 16K Ethernet SRAM */
-#define RX_DESC_BASE        0x20080000
+/* EMAC variables located in 16K AHB (DMA-capable) SRAM */
+#define RX_DESC_BASE        0x20080000   // Beginning of AHB1
 #define RX_STAT_BASE        (RX_DESC_BASE + NUM_RX_FRAG*8)
 #define TX_DESC_BASE        (RX_STAT_BASE + NUM_RX_FRAG*8)
 #define TX_STAT_BASE        (TX_DESC_BASE + NUM_TX_FRAG*8)
@@ -290,23 +290,16 @@
 #define PHY_HALFD_10M       0x0000      /* Half Duplex 10MBit                */
 #define PHY_AUTO_NEG        0x3000      /* Select Auto Negotiation           */
 
+/* This is the PHY in the MBED */
 #define DP83848C_DEF_ADR    0x0100      /* Default PHY device address        */
 #define DP83848C_ID         0x20005C90  /* PHY Identifier                    */
 
-#define LAN8720_DEF_ADR 0x0100
-#define LAN8720_ID 0x0007C0F0
+/* This is the PHY in the LPCXpresso */
+#define LAN8720_DEF_ADR     0x0100      /* Device address */
+#define LAN8720_ID          0x0007C0F0  /* Identifier */
 
 // prototypes
-void           Init_EMAC(void);
-unsigned short ReadFrameBE_EMAC(void);
-void           CopyFromFrame_EMAC(void *Dest, unsigned short Size);
-void           DummyReadFrame_EMAC(unsigned short Size);
-unsigned short StartReadFrame(void);
-void           EndReadFrame(void);
-unsigned int   CheckFrameReceived(void);
-
-void ENET_IRQHandler(void);
-
+void Init_EMAC(void);
 void ethernetPleaseSend(unsigned short, unsigned short);
 
 #endif
