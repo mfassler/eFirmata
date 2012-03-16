@@ -1,0 +1,59 @@
+<html>
+<head>
+<style>
+
+.importantNote
+{
+    background: #ddddff;
+    margin: 15px;
+    padding: 10px;
+    width: 650px;
+}
+</style>
+</head>
+<body>
+<h1>eFirmata</h1>
+<h2>Getting Started Using the mbed</h1>
+<h3>mbed with Ethernet</h3>
+The easiest way to get started with eFirmata is probably with the mbed, with
+an ethernet connection:
+<img src="img/ch01/mbed-with-ethernet700x516.jpg"><br>
+<br>
+Same pic, with notes:
+<br>
+<img src="img/ch01/mbed-with-ethernet.png"><br>
+(You'll have to solder the mbed-ether-kit yourself.)<br>
+(I think that the power and ground connection from the ethernet
+to the mbed serve as biasing for the magnetics, I'm not sure...<br>
+The system will still work without these wires, but auto-negotiation
+with the ethernet switch will oftentimes take longer.)  
+
+<br><br><br>
+
+<h3>Serial Debug</h3>
+I'm the kind of programmer that does debugging with printf() statements, so
+I use a serial port. <br>
+Debug-out is on UART#2, pin #28:  <br>
+<img src="img/ch01/mbed-with-ethernet-serial.png"><br>
+Baud rate:  38400.  8N1.  <br>
+
+<div class="importantNote">
+<b>Note:</b> &nbsp; <i> A "proper" PC serial port operates a 12 volts.  The mbed operates at 3.3 volts.</i><br>
+The serial adapters that are commonly used in the Arduino world 
+(such as <a href="http://www.sparkfun.com/products/8772">this one</a>) should work just fine.  
+</div>
+
+<br>
+<br><br><br>
+<h3>PWM</h3>
+The mbed has 6 PWM outputs.  We can use those outputs as light dimmers.  It's
+easy to connect these outputs to LEDs:
+<img src="img/ch01/mbed-with-ethernet-serial-leds.png">
+<br>
+From here, you can use the sample code, ( workstation/userFirmataSender.py ), to control
+the LEDs.
+<br><br><br>
+
+
+</body>
+</html>
