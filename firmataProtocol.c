@@ -21,15 +21,9 @@ void parseFrame(char* input, unsigned short inputLen)
 
     if ((input[12] == 0x18) && (input[13] == 0x1c))  // etherType == eFirmata
     {
-        if ( input[14] == 83 )   // 83 = "S"
-        {
-            LPC_GPIO2->FIOSET = (input[15] << 6);
-        }
-        else if ( input[14] == 67 )  // 67 = "C"
-        {
-            LPC_GPIO2->FIOCLR = (input[15] << 6);
-        }
-
+        LPC_GPIO2->FIOPIN = (input[14] << 6);
+        // byte#15..
+        // byte#16..
         LPC_PWM1->MR1 = input[17];
         LPC_PWM1->MR2 = input[18];
         LPC_PWM1->MR3 = input[19];
