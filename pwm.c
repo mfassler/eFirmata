@@ -7,7 +7,7 @@
 
 void PWM_Init(void)
 {
-    LPC_PINCON->PINSEL4 = 0x00001555;	// set GPIOs for all PWM pins on PWM
+    LPC_PINCON->PINSEL4 = 0x00000555;	// set GPIOs for all PWM pins on PWM
 
     LPC_PWM1->TCR = TCR_RESET;	// Counter Reset
 	//LPC_PWM1->PR = 0x00;		// count frequency:Fpclk
