@@ -236,40 +236,40 @@ void getAccel(uint8_t whichChip, uint16_t *x, uint16_t *y, uint16_t *z)
         LPC_GPIO0->FIOCLR = (1 << 0);  // CS low
     }
     /* Move on only if NOT busy and TX FIFO not full. */
-    while ( (LPC_SSP1->SR & (SSPSR_TNF|SSPSR_BSY)) != SSPSR_TNF );
+    while ( !(LPC_SSP1->SR & (SSPSR_TNF|SSPSR_BSY)) );
 
     LPC_SSP1->DR = 0x80;
-    while ( (LPC_SSP1->SR & (SSPSR_BSY|SSPSR_RNE)) != SSPSR_RNE );
+    while ( !(LPC_SSP1->SR & (SSPSR_BSY|SSPSR_RNE)) );
     nothing = LPC_SSP1->DR;    
 
     /* TODO: Delay of 200 uS */
 
     LPC_SSP1->DR = 0xFF;
-    while ( (LPC_SSP1->SR & (SSPSR_BSY|SSPSR_RNE)) != SSPSR_RNE );
+    while ( !(LPC_SSP1->SR & (SSPSR_BSY|SSPSR_RNE)) );
     MSByte = LPC_SSP1->DR;    
 
     LPC_SSP1->DR = 0xFF;
-    while ( (LPC_SSP1->SR & (SSPSR_BSY|SSPSR_RNE)) != SSPSR_RNE );
+    while ( !(LPC_SSP1->SR & (SSPSR_BSY|SSPSR_RNE)) );
     LSByte = LPC_SSP1->DR;    
 
     *x = (MSByte << 8) | LSByte;
 
     LPC_SSP1->DR = 0xFF;
-    while ( (LPC_SSP1->SR & (SSPSR_BSY|SSPSR_RNE)) != SSPSR_RNE );
+    while ( !(LPC_SSP1->SR & (SSPSR_BSY|SSPSR_RNE)) );
     MSByte = LPC_SSP1->DR;    
 
     LPC_SSP1->DR = 0xFF;
-    while ( (LPC_SSP1->SR & (SSPSR_BSY|SSPSR_RNE)) != SSPSR_RNE );
+    while ( !(LPC_SSP1->SR & (SSPSR_BSY|SSPSR_RNE)) );
     LSByte = LPC_SSP1->DR;    
 
     *y = (MSByte << 8) | LSByte;
 
     LPC_SSP1->DR = 0xFF;
-    while ( (LPC_SSP1->SR & (SSPSR_BSY|SSPSR_RNE)) != SSPSR_RNE );
+    while ( !(LPC_SSP1->SR & (SSPSR_BSY|SSPSR_RNE)) );
     MSByte = LPC_SSP1->DR;    
 
     LPC_SSP1->DR = 0xFF;
-    while ( (LPC_SSP1->SR & (SSPSR_BSY|SSPSR_RNE)) != SSPSR_RNE );
+    while ( !(LPC_SSP1->SR & (SSPSR_BSY|SSPSR_RNE)) );
     LSByte = LPC_SSP1->DR;    
 
     *z = (MSByte << 8) | LSByte;
