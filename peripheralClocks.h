@@ -11,7 +11,10 @@
 #define PCLK_TIMER1     2
 #define PCLK_UART0      3
 #define PCLK_UART1      4
+#define PCLK_PWM1       5
+#define PCLK_SSP1       8
 #define PCLK_ADC        10
+#define PCLK_SSP0       18
 #define PCLK_UART2      21
 
 uint32_t getPeripheralClock (int);
