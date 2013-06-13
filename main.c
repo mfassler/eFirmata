@@ -24,90 +24,90 @@ volatile uint32_t current_time;
 
 void jiffyAction (void)
 {
-    // Once every 10 ms we send sensor data to the PC.
+	// Once every 10 ms we send sensor data to the PC.
 
 	// Digital inputs for the eFirmata protocol: P1.24 through P1.31
 	mySensorPacket->inputByte = (LPC_GPIO1->FIOPIN >> 24) & 0xff;
 
-    mySensorPacket->adcVal = ADCValue[4];   // bend sensor for right elbow
+	mySensorPacket->adcVal = ADCValue[4];   // bend sensor for right elbow
 
 
-    getAccel(0, &(mySensorPacket->xAccel0), 
-                &(mySensorPacket->yAccel0),
-                &(mySensorPacket->zAccel0)  );
+	getAccel(0, &(mySensorPacket->xAccel0), 
+				&(mySensorPacket->yAccel0),
+				&(mySensorPacket->zAccel0)  );
 
-    getAccel(1, &(mySensorPacket->xAccel1), 
-                &(mySensorPacket->yAccel1),
-                &(mySensorPacket->zAccel1)  );
+	getAccel(1, &(mySensorPacket->xAccel1), 
+				&(mySensorPacket->yAccel1),
+				&(mySensorPacket->zAccel1)  );
 
 
-    ethernetPleaseSend(0, sizeof(struct sensorPacket));
+	ethernetPleaseSend(0, sizeof(struct sensorPacket));
 }
 
 
 void SysTick_Handler (void)
 {
-    current_time++;
-    jiffyAction();
+	current_time++;
+	jiffyAction();
 }
 
 
 int main() {
-    // Enable our blinky LEDs:
-    LPC_GPIO1->FIODIR = (1 << 18) | (1 << 20) | (1 << 21) | (1 << 23);
+	// Enable our blinky LEDs:
+	LPC_GPIO1->FIODIR = (1 << 18) | (1 << 20) | (1 << 21) | (1 << 23);
 
-    LPC_GPIO1->FIOSET = (1 << 18);  // Turn on blinky LED #1
+	LPC_GPIO1->FIOSET = (1 << 18);  // Turn on blinky LED #1
 
-    // Initialize serial port for debug messages:
-    UARTInit(2, 38400);
-    debug("...init done.");
+	// Initialize serial port for debug messages:
+	UARTInit(2, 38400);
+	debug("...init done.");
 
-    LPC_GPIO1->FIOSET = (1 << 20);  // Turn on blinky LED #2
+	LPC_GPIO1->FIOSET = (1 << 20);  // Turn on blinky LED #2
 
-    // Initialize Ethernet:
-    Init_EMAC();
-    NVIC_EnableIRQ(ENET_IRQn);
+	// Initialize Ethernet:
+	Init_EMAC();
+	NVIC_EnableIRQ(ENET_IRQn);
 
-    LPC_GPIO1->FIOSET = (1 << 21);  // Turn on blinky LED #3
-    debug("Done with Init_EMAC().");
+	LPC_GPIO1->FIOSET = (1 << 21);  // Turn on blinky LED #3
+	debug("Done with Init_EMAC().");
 
-    LPC_GPIO1->FIOSET = (1 << 23);  // Turn on blinky LED #4
+	LPC_GPIO1->FIOSET = (1 << 23);  // Turn on blinky LED #4
 
 
-    // ***** BEGIN:  Initialize peripherials
+	// ***** BEGIN:  Initialize peripherials
 
-    // Disable UART0 and UART1 for power-saving:
-    //LPC_SC->PCONP &= ~((1 << 3) | (1 << 4));
+	// Disable UART0 and UART1 for power-saving:
+	//LPC_SC->PCONP &= ~((1 << 3) | (1 << 4));
 
-    // Digital outputs for the eFirmata protocol:
-    LPC_GPIO2->FIODIR = 0x00003fc0; // P2.6 through P2.13
+	// Digital outputs for the eFirmata protocol:
+	LPC_GPIO2->FIODIR = 0x00003fc0; // P2.6 through P2.13
 
 	// Digital inputs for the eFirmata protocol:
 	//LPC_GPIO1->FIODIR = // P1.24 through P1.31
 
-    ADCInit();
-    DACInit();
-    PWM_Init();
-    PWM_Start();
-    //SSP0Init();
-    SSP1Init();
+	ADCInit();
+	DACInit();
+	PWM_Init();
+	PWM_Start();
+	//SSP0Init();
+	SSP1Init();
 	//Quadrature_Init();
 
-    // ***** END:  Initialize peripherials
+	// ***** END:  Initialize peripherials
 
-    // Set the src_address, dest_address, etc:
-    initOutgoingEthernetPackets();
+	// Set the src_address, dest_address, etc:
+	initOutgoingEthernetPackets();
 
-    // Start the 100 Hz timer:
-    SysTick_Config (SystemCoreClock / 100);
+	// Start the 100 Hz timer:
+	SysTick_Config (SystemCoreClock / 100);
 
-    while (1)
-    {
-        delayMs(0, 120);
-        LPC_GPIO1->FIOSET = (1 << 20) | (1<<23);  // heartbeat
+	while (1)
+	{
+		delayMs(0, 120);
+		LPC_GPIO1->FIOSET = (1 << 20) | (1<<23);  // heartbeat
 
-        delayMs(0, 120);
-        LPC_GPIO1->FIOCLR = (1 << 20) | (1<<23);  // heartbeat
-    }
+		delayMs(0, 120);
+		LPC_GPIO1->FIOCLR = (1 << 20) | (1<<23);  // heartbeat
+	}
 }
 
