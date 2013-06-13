@@ -26,7 +26,11 @@ void jiffyAction (void)
 {
     // Once every 10 ms we send sensor data to the PC.
 
+	// Digital inputs for the eFirmata protocol: P1.24 through P1.31
+	mySensorPacket->inputByte = (LPC_GPIO1->FIOPIN >> 24) & 0xff;
+
     mySensorPacket->adcVal = ADCValue[4];   // bend sensor for right elbow
+
 
     getAccel(0, &(mySensorPacket->xAccel0), 
                 &(mySensorPacket->yAccel0),
@@ -35,6 +39,7 @@ void jiffyAction (void)
     getAccel(1, &(mySensorPacket->xAccel1), 
                 &(mySensorPacket->yAccel1),
                 &(mySensorPacket->zAccel1)  );
+
 
     ethernetPleaseSend(0, sizeof(struct sensorPacket));
 }
@@ -77,11 +82,16 @@ int main() {
     // Digital outputs for the eFirmata protocol:
     LPC_GPIO2->FIODIR = 0x00003fc0; // P2.6 through P2.13
 
+	// Digital inputs for the eFirmata protocol:
+	//LPC_GPIO1->FIODIR = // P1.24 through P1.31
+
     ADCInit();
     DACInit();
     PWM_Init();
     PWM_Start();
+    //SSP0Init();
     SSP1Init();
+	//Quadrature_Init();
 
     // ***** END:  Initialize peripherials
 
