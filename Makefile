@@ -19,6 +19,7 @@ OBJECTS += ssp.o
 OBJECTS += adc.o
 OBJECTS += dac.o
 OBJECTS += pwm.o
+OBJECTS += modules/quadrature.o
 OBJECTS += timer.o
 OBJECTS += main.o 
 

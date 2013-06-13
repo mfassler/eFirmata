@@ -13,6 +13,7 @@
 #include "adc.h"
 #include "dac.h"
 #include "pwm.h"
+#include "modules/quadrature.h"
 #include "timer.h"
 
 #include "firmataProtocol.h"
@@ -24,6 +25,8 @@ volatile uint32_t current_time;
 
 void jiffyAction (void)
 {
+	//uint8_t i;
+
 	// Once every 10 ms we send sensor data to the PC.
 
 	// Digital inputs for the eFirmata protocol: P1.24 through P1.31
@@ -40,6 +43,21 @@ void jiffyAction (void)
 				&(mySensorPacket->yAccel1),
 				&(mySensorPacket->zAccel1)  );
 
+/*
+	// Check for data from SSP0:
+	i=0;
+	while (LPC_SSP0->SR & SSPSR_RNE) {  // RNE = Receive FIFO Not Empty
+		// Counting starts at 1
+		i++;
+		mySensorPacket->happyMessage[i] = LPC_SSP0->DR;
+		if (i > 7) {
+			break;
+		}
+	}
+	mySensorPacket->happyMessage[0] = i;
+*/
+
+	mySensorPacket->quadPositionA = quadrature_getPosition(0x00);
 
 	ethernetPleaseSend(0, sizeof(struct sensorPacket));
 }
@@ -91,7 +109,7 @@ int main() {
 	PWM_Start();
 	//SSP0Init();
 	SSP1Init();
-	//Quadrature_Init();
+	Quadrature_Init();
 
 	// ***** END:  Initialize peripherials
 
