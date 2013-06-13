@@ -25,7 +25,7 @@ volatile uint32_t current_time;
 
 void jiffyAction (void)
 {
-	//uint8_t i;
+	uint8_t i;
 
 	// Once every 10 ms we send sensor data to the PC.
 
