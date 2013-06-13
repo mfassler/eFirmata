@@ -62,7 +62,7 @@ void SSP1_IRQHandler(void)
 {
 	uint32_t regValue;
 
-	debug("this is: SSP1_IRQHandler()");
+	//debug("this is: SSP1_IRQHandler()");
 	regValue = LPC_SSP1->MIS;
 	if ( regValue & SSPMIS_RORMIS )	/* Receive overrun interrupt */
 	{
