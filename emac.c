@@ -24,8 +24,8 @@
 
 #include "ethernetPHY.h"
 #include "emac.h"
-#include "firmataProtocol.h"
-#include "MAC_ADDRESSES.h"
+#include "network/firmataProtocol.h"
+#include "network/MAC_ADDRESSES.h"
 
 #include "debug.h"
 #include "timer.h"

@@ -3,9 +3,9 @@
 #include "debug.h"
 #include "pwm.h"
 
-#include "firmataProtocol.h"
+#include "network/firmataProtocol.h"
 #include "emac.h"
-#include "MAC_ADDRESSES.h"
+#include "network/MAC_ADDRESSES.h"
 
 #include "ssp.h"
 

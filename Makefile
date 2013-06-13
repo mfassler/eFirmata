@@ -12,7 +12,7 @@ OBJECTS += CMSIS/system_LPC17xx.o
 OBJECTS += peripheralClocks.o
 OBJECTS += uart.o
 OBJECTS += debug.o
-OBJECTS += firmataProtocol.o
+OBJECTS += network/firmataProtocol.o
 OBJECTS += ethernetPHY.o
 OBJECTS += emac.o
 OBJECTS += ssp.o
@@ -43,7 +43,7 @@ SIZE = arm-none-eabi-size
 #####   Includes, libraries
 #####
 
-INCDIRS = -I CMSIS/
+INCDIRS = -I ./ -I CMSIS/
 
 
 

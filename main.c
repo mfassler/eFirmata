@@ -16,7 +16,7 @@
 #include "modules/quadrature.h"
 #include "timer.h"
 
-#include "firmataProtocol.h"
+#include "network/firmataProtocol.h"
 
 extern volatile uint16_t ADCValue[ADC_NUM];
 extern struct sensorPacket *mySensorPacket;

@@ -13,8 +13,8 @@
 #include "debug.h"
 
 #include "emac.h"
-#include "MAC_ADDRESSES.h"
-#include "firmataProtocol.h"
+#include "network/MAC_ADDRESSES.h"
+#include "network/firmataProtocol.h"
 
 volatile uint16_t ADCValue[ADC_NUM];
 
