@@ -43,7 +43,7 @@ void jiffyAction (void)
 				&(mySensorPacket->yAccel1),
 				&(mySensorPacket->zAccel1)  );
 
-/*
+
 	// Check for data from SSP0:
 	i=0;
 	while (LPC_SSP0->SR & SSPSR_RNE) {  // RNE = Receive FIFO Not Empty
@@ -55,7 +55,7 @@ void jiffyAction (void)
 		}
 	}
 	mySensorPacket->happyMessage[0] = i;
-*/
+
 
 	mySensorPacket->quadPositionA = quadrature_getPosition(0x00);
 
@@ -107,7 +107,7 @@ int main() {
 	DACInit();
 	PWM_Init();
 	PWM_Start();
-	//SSP0Init();
+	SSP0Init();
 	SSP1Init();
 	Quadrature_Init();
 

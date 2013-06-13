@@ -87,66 +87,48 @@ void SSP1_IRQHandler(void)
 }
 
 
-void SSP_SSELToggle( uint32_t portnum, uint32_t toggle )
-{
-	if ( portnum == 0 )
-	{
-		if ( !toggle )
-			LPC_GPIO0->FIOCLR |= (0x1<<16);
-		else
-			LPC_GPIO0->FIOSET |= (0x1<<16);	  
-	}
-	else if ( portnum == 1 )
-	{
-		if ( !toggle )
-			LPC_GPIO0->FIOCLR |= (0x1<<6);
-		else
-			LPC_GPIO0->FIOSET |= (0x1<<6);	  
-	}
-	return;
-}
-
-
-
 void SSP0Init( void )
 {
-	uint8_t i, Dummy=Dummy;
+	uint8_t nothing=nothing;
+	uint8_t i;
 
-	/* Enable AHB clock to the SSP0. */
+	// Enable AHB clock to the SSP0:
 	LPC_SC->PCONP |= (0x1<<21);
 
 	// The peripheral clock.  Leave at default (divide by 4)
 	//setPeripheralClock(PCLK_SSP0, 4);
 
-	/* P0.15~0.18 as SSP0 */
-	LPC_PINCON->PINSEL0 &= ~(0x3UL<<30);
-	LPC_PINCON->PINSEL0 |= (0x2UL<<30);
-	LPC_PINCON->PINSEL1 &= ~((0x3<<0)|(0x3<<2)|(0x3<<4));
-	LPC_PINCON->PINSEL1 |= ((0x2<<0)|(0x2<<2)|(0x2<<4));
+	// SSP0 is on pins P0.15 through 0.18
+	LPC_PINCON->PINSEL0 &= ~(0x3UL<<30); // Clear P0.15
+	LPC_PINCON->PINSEL0 |= (0x2UL<<30); // P0.15 is SCK
+	LPC_PINCON->PINSEL1 &= ~((0x3<<0)|(0x3<<2)|(0x3<<4));  // Clear P0.16, P0.17, P0.18
+	LPC_PINCON->PINSEL1 |= ((0x2<<0)|(0x2<<2)|(0x2<<4)); // P0.16 is SSEL, P0.17 is MISO, P0.18 is MOSI
   
-	LPC_PINCON->PINSEL1 &= ~(0x3<<0); // P0.16 is GPIO
-	LPC_GPIO0->FIODIR |= (0x1<<16); // P0.16 is an output
+	// ** SSP Control Register **
+	// 0x...7 -- Data Size:  8-bit   
+	// 0x..0. -- Frame format: SPI, CPOL=0, CPHA=0
+	// 0x3f.. -- SCR: 63
+	LPC_SSP0->CR0 = 0x3f07;
 
-	/* Set DSS data to 8-bit, Frame format SPI, CPOL = 0, CPHA = 0, and SCR is 15 */
-	LPC_SSP0->CR0 = 0x0707;
+	// CPSR, clock prescale register for master mode (not used for slave mode)
+	//  Must be 2 or greater.  Must be an even number.
+	//  Bit clock = PCLK / (CPSR * (SCR + 1))
+	LPC_SSP0->CPSR = 2;
 
-	/* SSPCPSR clock prescale register, master mode, minimum divisor is 0x02 */
-	LPC_SSP0->CPSR = 0x2;
-
-	for ( i = 0; i < FIFOSIZE; i++ )
-	{
-		Dummy = LPC_SSP0->DR;   /* clear the RxFIFO */
+	for (i = 0; i < FIFOSIZE; i++) {
+		nothing = LPC_SSP0->DR;   // clear the RxFIFO
 	}
 
-	/* Enable the SSP Interrupt */
+	// Enable the Interrupt
 	NVIC_EnableIRQ(SSP0_IRQn);
-	
-	/* Master mode */
-	LPC_SSP0->CR1 = SSPCR1_SSE;
 
-	/* Set SSPINMS registers to enable interrupts */
-	/* enable all error related interrupts */
+	// Set SSPINMS registers to enable interrupts
+	// enable all error related interrupts
 	LPC_SSP0->IMSC = SSPIMSC_RORIM | SSPIMSC_RTIM;
+
+	// No loopback, SSP enable, Master mode (set this after setting up interrupts)
+	LPC_SSP0->CR1 = 0x2;
+
 	return;
 }
 
@@ -198,6 +180,33 @@ void SSP1Init( void )
 }
 
 
+void SSP0Send(char *buf, uint32_t Length) {
+	uint32_t i;
+	uint8_t Dummy = Dummy;
+
+	//debug("SSP0Send()");
+	for (i = 0; i < Length; i++) {
+
+		// Wait for space in the TX FIFO:
+		while ( !(LPC_SSP0->SR & SSPSR_TNF) );
+
+		// Add a byte to the TX buffer:
+		LPC_SSP0->DR = *buf;
+
+		// Next byte:
+		buf++;
+
+//		while ( !(LPC_SSP0->SR & (SSPSR_RNE|SSPSR_BSY)) );
+
+		/* Whenever a byte is written, MISO FIFO counter increments, Clear FIFO 
+		on MISO. Otherwise, when SSP0Receive() is called, previous data byte
+		is left in the FIFO. */
+//		Dummy = LPC_SSP0->DR;
+	}
+	return; 
+}
+
+
 void SSP1Send(uint8_t *buf, uint32_t Length)
 {
 	uint32_t i;
@@ -224,7 +233,7 @@ void SSP1Send(uint8_t *buf, uint32_t Length)
 /* This is for use with the KXP84 3-axis Accelerometer chip */
 void getAccel(uint8_t whichChip, uint16_t *x, uint16_t *y, uint16_t *z)
 {
-	uint8_t nothing;
+	uint8_t nothing=nothing;
 	uint8_t LSByte;
 	uint8_t MSByte;
 	if (whichChip == 0)
