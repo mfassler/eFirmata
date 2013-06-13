@@ -8,6 +8,10 @@ seems to be here:
 
 https://sourcery.mentor.com/sgpp/lite/arm/portal/package8734/public/arm-none-eabi/arm-2011.03-42-arm-none-eabi-i686-pc-linux-gnu.tar.bz2
 
+As of June 2013, this seems to be the latest link:
+https://sourcery.mentor.com/GNUToolchain/package11442/public/arm-none-eabi/arm-2013.05-23-arm-none-eabi-i686-pc-linux-gnu.tar.bz2
+
+
 Untar that package and install it to somewhere useful (like /opt).  
 Add the bin directory to your $PATH.  I have this in my 
 .bash_profile:
