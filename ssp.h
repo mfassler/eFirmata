@@ -67,14 +67,18 @@
 #define SSPRIS_TXRIS	(1 << 3)
 
 /* SSP0 Masked Interrupt register */
+/*
 #define SSPMIS_RORMIS	(1 << 0)
 #define SSPMIS_RTMIS	(1 << 1)
 #define SSPMIS_RXMIS	(1 << 2)
 #define SSPMIS_TXMIS	(1 << 3)
+*/
 
 /* SSP0 Interrupt clear register */
+/*
 #define SSPICR_RORIC	(1 << 0)
 #define SSPICR_RTIC		(1 << 1)
+*/
 
 /* ATMEL SEEPROM command set */
 #define WREN		0x06		/* MSB A8 is set to 0, simplifying test */
@@ -94,7 +98,8 @@ extern void SSP0_IRQHandler (void);
 extern void SSP1_IRQHandler (void);
 extern void SSP0Init( void );
 extern void SSP1Init( void );
-extern void SSP0Send(char *Buf, uint32_t Length);
+extern int SSP0Send(char *Buf, int Length);
+extern void SSP0_sendBytes(void);
 extern void SSP1Send(uint8_t *Buf, uint32_t Length);
 extern void SSPReceive( uint32_t portnum, uint8_t *buf, uint32_t Length );
 

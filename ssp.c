@@ -20,6 +20,7 @@
 ****************************************************************************/
 #include "LPC17xx.h"			/* LPC17xx Peripheral Registers */
 #include "ssp.h"
+#include "bitTypes.h"
 #include "debug.h"
 
 /* statistics of all the interrupts */
@@ -34,26 +35,36 @@ void SSP0_IRQHandler(void)
 {
 	uint32_t regValue;
 
-	regValue = LPC_SSP0->MIS;
-	if ( regValue & SSPMIS_RORMIS )	/* Receive overrun interrupt */
-	{
+	regValue = LPC_SSP0->MIS; // MIS - Masked Interrupt Status Register
+
+	// RORMIS -- Receive Overrun
+	if (regValue & bit0) {
 		interrupt0OverRunStat++;
-		LPC_SSP0->ICR = SSPICR_RORIC;		/* clear interrupt */
+		LPC_SSP0->ICR = bit0;   // Clear the interrupt
 	}
-	if ( regValue & SSPMIS_RTMIS )	/* Receive timeout interrupt */
-	{
+
+	// Read timeout (ie, we should be reading from Rx FIFO...)
+	if (regValue & bit1) {
 		interrupt0RxTimeoutStat++;
-		LPC_SSP0->ICR = SSPICR_RTIC;		/* clear interrupt */
+		LPC_SSP0->ICR = bit1;  // Clear the interrupt
 	}
 
 	/* please be aware that, in main and ISR, CurrentRxIndex and CurrentTxIndex
 	are shared as global variables. It may create some race condition that main
 	and ISR manipulate these variables at the same time. SSPSR_BSY checking (polling)
 	in both main and ISR could prevent this kind of race condition */
-	if ( regValue & SSPMIS_RXMIS )	/* Rx at least half full */
-	{
-		interrupt0RxStat++;		/* receive until it's empty */
+
+	// RXMIS -- Rx FIFO is at lest half full
+	if (regValue & bit2) {
+		interrupt0RxStat++;
 	}
+
+	// TXMIS -- Tx FIFO is at least half empty
+	if (regValue & bit3) {
+		// The sendBytes() function will check whether or not there's data to send.
+		SSP0_sendBytes();
+	}
+
 	return;
 }
 
@@ -64,25 +75,30 @@ void SSP1_IRQHandler(void)
 
 	//debug("this is: SSP1_IRQHandler()");
 	regValue = LPC_SSP1->MIS;
-	if ( regValue & SSPMIS_RORMIS )	/* Receive overrun interrupt */
-	{
+
+	// RORMIS -- Receive Overrun
+	if (regValue & bit0) {
 		interrupt1OverRunStat++;
-		LPC_SSP1->ICR = SSPICR_RORIC;		/* clear interrupt */
+		LPC_SSP1->ICR = bit0; // Clear the interrupt
 	}
-	if ( regValue & SSPMIS_RTMIS )	/* Receive timeout interrupt */
-	{
+
+	
+	// Read timeout (ie, we should be reading from Rx FIFO...)
+	if (regValue & bit1) {
 		interrupt1RxTimeoutStat++;
-		LPC_SSP1->ICR = SSPICR_RTIC;		/* clear interrupt */
+		LPC_SSP1->ICR = bit1; // Clear the interrupt
 	}
 
 	/* please be aware that, in main and ISR, CurrentRxIndex and CurrentTxIndex
 	are shared as global variables. It may create some race condition that main
 	and ISR manipulate these variables at the same time. SSPSR_BSY checking (polling)
 	in both main and ISR could prevent this kind of race condition */
-	if ( regValue & SSPMIS_RXMIS )	/* Rx at least half full */
-	{
-		interrupt1RxStat++;		/* receive until it's empty */		
+
+	// RXMIS -- Rx FIFO is at lest half full
+	if (regValue & bit2) {
+		interrupt1RxStat++; // Receive until it's empty
 	}
+
 	return;
 }
 
@@ -93,7 +109,7 @@ void SSP0Init( void )
 	uint8_t i;
 
 	// Enable AHB clock to the SSP0:
-	LPC_SC->PCONP |= (0x1<<21);
+	LPC_SC->PCONP |= bit21;
 
 	// The peripheral clock.  Leave at default (divide by 4)
 	//setPeripheralClock(PCLK_SSP0, 4);
@@ -109,11 +125,13 @@ void SSP0Init( void )
 	// 0x..0. -- Frame format: SPI, CPOL=0, CPHA=0
 	// 0x3f.. -- SCR: 63
 	LPC_SSP0->CR0 = 0x3f07;
+	//LPC_SSP0->CR0 = 0x3fc7;  // CPOL=1, CPHA=1
 
 	// CPSR, clock prescale register for master mode (not used for slave mode)
 	//  Must be 2 or greater.  Must be an even number.
 	//  Bit clock = PCLK / (CPSR * (SCR + 1))
-	LPC_SSP0->CPSR = 2;
+	//LPC_SSP0->CPSR = 2;
+	LPC_SSP0->CPSR = 8;
 
 	for (i = 0; i < FIFOSIZE; i++) {
 		nothing = LPC_SSP0->DR;   // clear the RxFIFO
@@ -122,12 +140,17 @@ void SSP0Init( void )
 	// Enable the Interrupt
 	NVIC_EnableIRQ(SSP0_IRQn);
 
-	// Set SSPINMS registers to enable interrupts
-	// enable all error related interrupts
-	LPC_SSP0->IMSC = SSPIMSC_RORIM | SSPIMSC_RTIM;
+	// Enable Interrupts.
+	//   bit0: RORIM -- Recieve Overrun
+	//   bit1: RTIM  -- Receive Timeout
+	LPC_SSP0->IMSC = bit0 | bit1;
+	// The TxFIFO interrupt will be set or cleared (elsewhere) as needed.
+	//   bit3: TXIM  -- Output FIFO is at least half empty
 
-	// No loopback, SSP enable, Master mode (set this after setting up interrupts)
-	LPC_SSP0->CR1 = 0x2;
+
+	// SSP enable (set this after setting up interrupts)
+	// ("Master mode" and "no loopback" are left at default)
+	LPC_SSP0->CR1 = bit1;
 
 	return;
 }
@@ -180,31 +203,68 @@ void SSP1Init( void )
 }
 
 
-void SSP0Send(char *buf, uint32_t Length) {
-	uint32_t i;
-	uint8_t Dummy = Dummy;
 
-	//debug("SSP0Send()");
-	for (i = 0; i < Length; i++) {
+// FIFO ring buffer for SSP0
+volatile char txBuffer_SSP0[256];
+volatile uint8_t txBuffer_SSP0_produceIdx = 0; // Input
+volatile uint8_t txBuffer_SSP0_consumeIdx = 0; // Output
 
-		// Wait for space in the TX FIFO:
-		while ( !(LPC_SSP0->SR & SSPSR_TNF) );
+int SSP0Send(char *buf, int length) {
+	int i;
+	uint8_t remainingSpace;
 
-		// Add a byte to the TX buffer:
-		LPC_SSP0->DR = *buf;
+	debug("this is SSP0Send");
+	remainingSpace = txBuffer_SSP0_consumeIdx - txBuffer_SSP0_produceIdx - 1;
+	debugByte("remainingSpace: ", remainingSpace);
+	debugLong("length: ", length);
 
-		// Next byte:
-		buf++;
-
-//		while ( !(LPC_SSP0->SR & (SSPSR_RNE|SSPSR_BSY)) );
-
-		/* Whenever a byte is written, MISO FIFO counter increments, Clear FIFO 
-		on MISO. Otherwise, when SSP0Receive() is called, previous data byte
-		is left in the FIFO. */
-//		Dummy = LPC_SSP0->DR;
+	if (remainingSpace < length) {
+		return -1;
 	}
+
+	for (i=0; i<length; i++) {
+		txBuffer_SSP0[txBuffer_SSP0_produceIdx] = *buf;
+		txBuffer_SSP0_produceIdx++;
+		buf++;
+	}
+
+	// If the buffer was originally empty, then we'll need to trigger the send
+	//if ((remainingSpace == 255) && i) {
+	// doesn't hurt to re-set the interrupt...
+	if (i) {
+		// Enable the Tx interrupt:
+		//   bit3: TXIM  -- Output FIFO is at least half empty
+		LPC_SSP0->IMSC |= bit3;
+	}
+
+	return length;
+}
+
+
+void SSP0_sendBytes(void) {
+	uint8_t numBytesToSend;
+
+	// Check for space in the Tx FIFO:
+	while (LPC_SSP0->SR & bit1) {
+		numBytesToSend = txBuffer_SSP0_produceIdx - txBuffer_SSP0_consumeIdx;
+
+		if (numBytesToSend) {
+			// Add a byte to the TX buffer:
+			LPC_SSP0->DR = txBuffer_SSP0[txBuffer_SSP0_consumeIdx];
+
+			// Next byte:
+			txBuffer_SSP0_consumeIdx++;
+
+		} else {
+			// No more bytes to send, so disable the Tx interrupt:
+			LPC_SSP0->IMSC &= ~bit3;
+			break;
+		}
+	}
+
 	return; 
 }
+
 
 
 void SSP1Send(uint8_t *buf, uint32_t Length)
