@@ -89,6 +89,10 @@ int main() {
 	LPC_GPIO1->FIOSET = (1 << 21);  // Turn on blinky LED #3
 	debug("Done with Init_EMAC().");
 
+	// Set the src_address, dest_address, etc:
+	initOutgoingEthernetPackets();  // This must occur before ADC init
+
+
 	LPC_GPIO1->FIOSET = (1 << 23);  // Turn on blinky LED #4
 
 
@@ -112,9 +116,6 @@ int main() {
 	Quadrature_Init();
 
 	// ***** END:  Initialize peripherials
-
-	// Set the src_address, dest_address, etc:
-	initOutgoingEthernetPackets();
 
 	// Start the 100 Hz timer:
 	SysTick_Config (SystemCoreClock / 100);
