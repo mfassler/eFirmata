@@ -47,14 +47,6 @@ performance (MIDI, microphones, lighting-effects, etc) on one,
 single eFirmata network.  
 
 
-(A possible future goal of eFirmata is to support real-time 
-probability data and matrix data, for use with machine learning.  
-(Real-time bayesian networks and real-time neural-networks 
-communicating over ethernet.)  But there's nothing about that kind 
-of data which needs to be concered about the specifics of I/O, so 
-it is left out of this design for now.)  
-
-
 
 
 Use cases:
