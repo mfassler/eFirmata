@@ -19,7 +19,10 @@ OBJECTS += ssp.o
 OBJECTS += adc.o
 OBJECTS += dac.o
 OBJECTS += pwm.o
+#OBJECTS += gpioStuff.o
 OBJECTS += modules/quadrature.o
+#OBJECTS += modules/stepperControl_positionEncoder.o
+#OBJECTS += modules/stepperControl_dSpin.o
 OBJECTS += timer.o
 OBJECTS += main.o 
 
