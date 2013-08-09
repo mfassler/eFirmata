@@ -21,6 +21,7 @@
 
 #include "LPC17xx.h"
 #include <type.h>
+#include "bitTypes.h"
 
 #include "ethernetPHY.h"
 #include "emac.h"
@@ -33,14 +34,12 @@
 
 
 // Tell the EMAC where to receive data into DMA memory:
-void rxDescriptorInit (void)
-{
+void rxDescriptorInit (void) {
 	unsigned int i;
 
 	// The order of the RX buffers never changes, so we set
 	// those descriptors here only once:
-	for (i = 0; i < NUM_RX_FRAG; i++)
-	{
+	for (i = 0; i < NUM_RX_FRAG; i++) {
 		RX_DESC_PACKET(i)  = RX_BUF(i);
 		RX_DESC_CTRL(i)	= RCTRL_INT | (ETH_FRAG_SIZE-1);
 		RX_STAT_INFO(i)	= 0;
@@ -58,8 +57,7 @@ void rxDescriptorInit (void)
 
 
 // Tell the EMAC where to transmit data from DMA memory:
-void txDescriptorInit(void)
-{
+void txDescriptorInit(void) {
 	// The order of the TX buffers might change (depending on what data
 	// we happen to be sending) so those descriptors are set on-the-fly
 	// as we send data; we do not set those here.
@@ -74,31 +72,26 @@ void txDescriptorInit(void)
 }
 
 
-void setLinkMode(uint8_t speed, uint8_t duplex)
-{
+void setLinkMode(uint8_t speed, uint8_t duplex) {
 	// This tells the Ethernet controller (on-board the micro-controller, 
 	// not the PHY) what mode to go into.
 
-	if (speed) // 100 Mbit
-	{
+	if (speed) {  // 100 Mbit
 		debug("100 Mbit");
 		LPC_EMAC->SUPP = SUPP_SPEED;
-	}
-	else // 10 Mbit
-	{
+
+	} else { // 10 Mbit
 		debug("10 Mbit");
 		LPC_EMAC->SUPP = 0;
 	}
 
-	if (duplex) // Full-duplex
-	{
+	if (duplex) {  // Full-duplex
 		debug("		Full-duplex");
 		LPC_EMAC->MAC2	|= MAC2_FULL_DUP;
 		LPC_EMAC->Command |= CR_FULL_DUP;
 		LPC_EMAC->IPGT	 = IPGT_FULL_DUP;
-	}
-	else  // Half-duplex
-	{
+
+	} else {   // Half-duplex
 		debug("		Half-duplex");
 		LPC_EMAC->IPGT = IPGT_HALF_DUP;
 	}
@@ -106,28 +99,27 @@ void setLinkMode(uint8_t speed, uint8_t duplex)
 
 
 
-void Init_EMAC(void)
-{
+void Init_EMAC(void) {
 	const char myAddress[] = SELF_ADDR;
 
 	// Power Up the EMAC controller.
 	LPC_SC->PCONP |= (0x1<<30);
 
-	LPC_GPIO1->FIOPIN = (1<<18); // Blinky LED #1
+	LPC_GPIO1->FIOPIN = bit18; // Blinky LED #1
 
 	LPC_PINCON->PINSEL2 = 0x50150105;
 	LPC_PINCON->PINSEL3 &= ~0x0000000F;
 	LPC_PINCON->PINSEL3 |= 0x00000005;
 
-	/* Reset all EMAC internal modules. */
+	// Reset all EMAC internal modules.
 	LPC_EMAC->MAC1 = MAC1_RES_TX | MAC1_RES_MCS_TX | MAC1_RES_RX | MAC1_RES_MCS_RX |
 			  MAC1_SIM_RES | MAC1_SOFT_RES;
 	LPC_EMAC->Command = CR_REG_RES | CR_TX_RES | CR_RX_RES;
 	delayMs(0, 100);
 
-	LPC_GPIO1->FIOPIN = (1<<20); // Blinky LED #2
+	LPC_GPIO1->FIOPIN = bit20; // Blinky LED #2
 
-	/* Initialize MAC control registers. */
+	// Initialize MAC control registers.
 	LPC_EMAC->MAC1 = MAC1_PASS_ALL;
 	LPC_EMAC->MAC2 = MAC2_CRC_EN | MAC2_PAD_EN;
 	LPC_EMAC->MAXF = ETH_MAX_FLEN;
@@ -144,41 +136,40 @@ void Init_EMAC(void)
 
 	enetPHY_Init();  // blinks LED#3, ends on LED#4
 
-	/* Set the Ethernet MAC Address registers */
+	// Set the Ethernet MAC Address registers
 	LPC_EMAC->SA0 = (myAddress[5] << 8) | myAddress[4];
 	LPC_EMAC->SA1 = (myAddress[3] << 8) | myAddress[2];
 	LPC_EMAC->SA2 = (myAddress[1] << 8) | myAddress[0];
 
-	/* Initialize Tx and Rx DMA Descriptors */
+	// Initialize Tx and Rx DMA Descriptors
 	rxDescriptorInit();
 	txDescriptorInit();
 
-	/* Receive Broadcast and Perfect Match Packets */
+	// Receive Broadcast and Perfect Match Packets
 	LPC_EMAC->RxFilterCtrl = RFC_BCAST_EN | RFC_PERFECT_EN;
 
-	/* Enable EMAC interrupts. */
+	// Enable EMAC interrupts.
 	LPC_EMAC->IntEnable = INT_RX_DONE | INT_TX_DONE;
 
-	/* Reset all interrupts */
+	// Reset all interrupts
 	LPC_EMAC->IntClear  = 0xFFFF;
 
-	/* Enable receive and transmit mode of MAC Ethernet core */
+	// Enable receive and transmit mode of MAC Ethernet core
 	LPC_EMAC->Command  |= (CR_RX_EN | CR_TX_EN);
 	LPC_EMAC->MAC1	 |= MAC1_REC_EN;
 
-	LPC_GPIO1->FIOPIN = (1<<18); // Blinky LED #1
+	LPC_GPIO1->FIOPIN = bit18; // Blinky LED #1
 }
 
 
 
-void ENET_IRQHandler (void)
-{
+void ENET_IRQHandler (void) {
 	unsigned int idx;
 
 	// On receive, the EMAC "produces" buffers.
 	// We must "consume" those buffers.  
-	while(LPC_EMAC->RxConsumeIndex != LPC_EMAC->RxProduceIndex)
-	{
+	while(LPC_EMAC->RxConsumeIndex != LPC_EMAC->RxProduceIndex) {
+
 		// The buffer that we must consume:
 		idx = LPC_EMAC->RxConsumeIndex;
 
@@ -188,8 +179,9 @@ void ENET_IRQHandler (void)
 
 		// Buffer consumed.  Move on to the next buffer:
 		idx++;
-		if (idx == NUM_RX_FRAG)
+		if (idx == NUM_RX_FRAG) {
 			idx = 0;
+		}
 
 		LPC_EMAC->RxConsumeIndex = idx;
 	}
@@ -200,14 +192,14 @@ void ENET_IRQHandler (void)
 
 
 
-void ethernetPleaseSend(unsigned short whichBuffer, unsigned short frameSize)
-{
+void ethernetPleaseSend(unsigned short whichBuffer, unsigned short frameSize) {
 	unsigned int idx;
 
 	// What is the next buffer index?
 	idx = LPC_EMAC->TxProduceIndex + 1;
-	if (idx == NUM_TX_FRAG)
+	if (idx == NUM_TX_FRAG) {
 		idx = 0;
+	}
 
 	// Point the way to the buffer:
 	TX_DESC_CTRL(idx)   = 0;

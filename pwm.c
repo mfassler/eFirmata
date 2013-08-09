@@ -5,8 +5,9 @@
 #include "pwm.h"
 #include "debug.h"
 
-void PWM_Init(void)
-{
+
+void PWM_Init(void) {
+
 	LPC_PINCON->PINSEL4 = 0x00000555;	// set GPIOs for all PWM pins on PWM
 
 	LPC_PWM1->TCR = TCR_RESET;	// Counter Reset
@@ -29,9 +30,9 @@ void PWM_Init(void)
 }
 
 
-void PWM_Set(uint32_t cycle, uint32_t offset )
-{			
-	LPC_PWM1->MR0 = cycle;		/* set PWM cycle */
+void PWM_Set(uint32_t cycle, uint32_t offset ) {
+
+	LPC_PWM1->MR0 = cycle;
 	LPC_PWM1->MR1 = cycle * 5/6 + offset;
 	LPC_PWM1->MR2 = cycle * 2/3 + offset;
 	LPC_PWM1->MR3 = cycle * 1/2 + offset;
@@ -46,17 +47,16 @@ void PWM_Set(uint32_t cycle, uint32_t offset )
 }
 
 
-void PWM_Start(void)
-{
-	/* All single edge, all enable */
+void PWM_Start(void) {
+
+	// All single edge, all enable
 	LPC_PWM1->PCR = PWMENA1 | PWMENA2 | PWMENA3 | PWMENA4 | PWMENA5 | PWMENA6;
-	LPC_PWM1->TCR = TCR_CNT_EN | TCR_PWM_EN;	/* counter enable, PWM enable */
+	LPC_PWM1->TCR = TCR_CNT_EN | TCR_PWM_EN; // counter enable, PWM enable
 }
 
 
-void PWM_Stop(void)
-{
+void PWM_Stop(void) {
 	LPC_PWM1->PCR = 0;
-	LPC_PWM1->TCR = 0x00;		// Stop all PWMs 
+	LPC_PWM1->TCR = 0x00;
 }
 

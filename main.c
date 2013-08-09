@@ -6,6 +6,7 @@
 
 
 #include <LPC17xx.h>
+#include "bitTypes.h"
 #include "uart.h"
 #include "debug.h"
 #include "emac.h"
@@ -23,8 +24,7 @@ extern struct sensorPacket *mySensorPacket;
 
 volatile uint32_t current_time;
 
-void jiffyAction (void)
-{
+void jiffyAction (void) {
 	uint8_t i;
 
 	// Once every 10 ms we send sensor data to the PC.
@@ -63,8 +63,7 @@ void jiffyAction (void)
 }
 
 
-void SysTick_Handler (void)
-{
+void SysTick_Handler (void) {
 	current_time++;
 	jiffyAction();
 }
@@ -72,28 +71,28 @@ void SysTick_Handler (void)
 
 int main() {
 	// Enable our blinky LEDs:
-	LPC_GPIO1->FIODIR = (1 << 18) | (1 << 20) | (1 << 21) | (1 << 23);
+	LPC_GPIO1->FIODIR = bit18 | bit20 | bit21 | bit23;
 
-	LPC_GPIO1->FIOSET = (1 << 18);  // Turn on blinky LED #1
+	LPC_GPIO1->FIOSET = bit18;  // Turn on blinky LED #1
 
 	// Initialize serial port for debug messages:
 	UARTInit(2, 38400);
 	debug("...init done.");
 
-	LPC_GPIO1->FIOSET = (1 << 20);  // Turn on blinky LED #2
+	LPC_GPIO1->FIOSET = bit20;  // Turn on blinky LED #2
 
 	// Initialize Ethernet:
 	Init_EMAC();
 	NVIC_EnableIRQ(ENET_IRQn);
 
-	LPC_GPIO1->FIOSET = (1 << 21);  // Turn on blinky LED #3
+	LPC_GPIO1->FIOSET = bit21;  // Turn on blinky LED #3
 	debug("Done with Init_EMAC().");
 
 	// Set the src_address, dest_address, etc:
 	initOutgoingEthernetPackets();  // This must occur before ADC init
 
 
-	LPC_GPIO1->FIOSET = (1 << 23);  // Turn on blinky LED #4
+	LPC_GPIO1->FIOSET = bit23;  // Turn on blinky LED #4
 
 
 	// ***** BEGIN:  Initialize peripherials
@@ -117,16 +116,16 @@ int main() {
 
 	// ***** END:  Initialize peripherials
 
+
 	// Start the 100 Hz timer:
 	SysTick_Config (SystemCoreClock / 100);
 
-	while (1)
-	{
+	while (1) {
 		delayMs(0, 120);
-		LPC_GPIO1->FIOSET = (1 << 20) | (1<<23);  // heartbeat
+		LPC_GPIO1->FIOSET = bit20 | bit23;  // heartbeat on
 
 		delayMs(0, 120);
-		LPC_GPIO1->FIOCLR = (1 << 20) | (1<<23);  // heartbeat
+		LPC_GPIO1->FIOCLR = bit20 | bit23;  // heartbeat off
 	}
 }
 
