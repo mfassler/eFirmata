@@ -132,6 +132,11 @@ while 1:
         for oneInput in inputs:
             if oneInput == inFileSocketControl:
                 print "inFileSocketControl:"
+                data, addr = oneInput.recvfrom(1522)
+                dstAddr = data[:6]
+                dstData = data[6:]
+                ## TODO:  calculate CRC
+                firmata.send(dstAddr + myMACaddr + ethertypeControl + dstData)
             if oneInput == inFileSocket:
                 print "inFileSocket:"
                 data, addr = oneInput.recvfrom(1522)

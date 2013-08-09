@@ -7,6 +7,8 @@
 
 #include <LPC17xx.h>
 #include <type.h>
+#include "bitTypes.h"
+
 #include "peripheralClocks.h"
 
 #include "adc.h"
@@ -16,67 +18,166 @@
 #include "network/MAC_ADDRESSES.h"
 #include "network/firmataProtocol.h"
 
-volatile uint16_t ADCValue[ADC_NUM];
-
 extern struct bigEtherFrame *bigEtherFrameA;
 extern struct bigEtherFrame *bigEtherFrameB;
 
+volatile uint16_t weAreSending;
 volatile uint16_t whichFrame;
-volatile uint16_t whichByteInPayload;
+volatile uint16_t whichSampleInPayload;
+volatile uint16_t totalBytesSent;
 
-void ADC_IRQHandler (void) 
-{
-	uint32_t regVal;
+volatile uint8_t triggerLevel;
+volatile uint8_t triggerDirection;
+volatile uint8_t triggerChannel;
+volatile uint8_t triggerEnabled;
 
-	static uint32_t fourSamples[ADC_NUM][4];
-	static uint8_t whichSample = 0;
+volatile uint8_t currentChannel;
 
-	static struct bigEtherFrame *aFrame;
-	if (whichFrame == 0)
-	{
-		aFrame = bigEtherFrameA;
+
+void ADC_startOneSample(void) {
+	uint8_t clkdiv = 1;
+	uint8_t whichChannelBitmask;
+	uint32_t startMode;
+	startMode = bit24; // for the ADC->CR, "START" conversion now
+
+	whichChannelBitmask = 1 << (currentChannel & 0x7);
+
+	//LPC_ADC->ADINTEN = bit1 | bit2 | bit4 | bit5; // Enable interrupts for channels 1, 2, 4 and 5
+	LPC_ADC->ADINTEN = bit8; // we only care about a single, global interrupt for ADC conversion
+
+	LPC_ADC->ADCR = whichChannelBitmask
+		| ( clkdiv << 8 )
+		| bit21 // PDN = 1, normal operation
+		| startMode;
+}
+
+
+void ADC_IRQHandler(void) {
+
+	uint8_t adcValue;
+
+	//regVal = LPC_ADC->ADSTAT;  // Read ADC will clear the interrupt?
+
+	switch (currentChannel) {
+		case 1:
+			adcValue = (LPC_ADC->ADDR1 & 0xfff0) >> 8;
+			currentChannel = 2;
+			ADC_startOneSample();
+			adc2network(1, adcValue);
+			break;
+		case 2:
+			adcValue = (LPC_ADC->ADDR2 & 0xfff0) >> 8;
+			currentChannel = 4;
+			ADC_startOneSample();
+			adc2network(2, adcValue);
+			break;
+		case 4:
+			adcValue = (LPC_ADC->ADDR4 & 0xfff0) >> 8;
+			currentChannel = 5;
+			ADC_startOneSample();
+			adc2network(4, adcValue);
+			break;
+		case 5:
+			adcValue = (LPC_ADC->ADDR5 & 0xfff0) >> 8;
+			currentChannel = 1;
+			ADC_startOneSample();
+			adc2network(5, adcValue);
+			break;
+		default:
+			debug("adc: wtf?");
 	}
-	else
-	{
-		aFrame = bigEtherFrameB;
+
+	//if (tmp & bit30) {
+	//	debug("adc overrun");
+	//}
+}
+
+
+
+void adc2network(uint8_t adcChannel, uint8_t adcValue) {
+	struct bigEtherFrame *aFrame;
+	uint8_t offset;
+	static uint8_t prevTriggerSamples[] = {0,0,0};
+
+	switch (adcChannel) {
+		case 1:
+			offset = 0;
+			break;
+		case 2:
+			offset = 1;
+			break;
+		case 4:
+			offset = 2;
+			break;
+		case 5:
+			offset = 3;
+			break;
+		default:
+			offset = 0;
 	}
 
-	regVal = LPC_ADC->ADSTAT;   /* Read ADC will clear the interrupt */
+	if (weAreSending) {
 
-	if (regVal & (1<<4) )
-	{
-		ADCValue[4] = LPC_ADC->ADDR4 & 0xFFF0;
-	}
+		// We have two ethernet frames in DMA memory.  We alternate between
+		// those two frames:
+		if (whichFrame == 0) {
+			aFrame = bigEtherFrameA;
+		} else {
+			aFrame = bigEtherFrameB;
+		}
 
-	if ( regVal & (1<<5) )
-	{
-		fourSamples[5][whichSample] = LPC_ADC->ADDR5 & 0xFFF0;
-		whichSample++;
+		// Write a byte to the next position in the frame:
+		aFrame->data[whichSampleInPayload * 4 + offset] = adcValue;
 
-		if(whichSample == 4)
-		{
-			whichSample = 0;
+		if (adcChannel > 4) {
+			whichSampleInPayload++;
+		}
 
-			// the right-shift by 2 is the same as divide by 4
-			ADCValue[5] = (fourSamples[5][0] +fourSamples[5][1] + fourSamples[5][2] + fourSamples[5][3]) >> 2;
-
-			aFrame->data[whichByteInPayload] = ADCValue[5];
-			whichByteInPayload++;
-
-			if (whichByteInPayload == 256)
-			{
-				whichByteInPayload = 0;
-				if (whichFrame == 0)
-				{
-					whichFrame = 1;
-					ethernetPleaseSend(1, sizeof(struct bigEtherFrame));
-				}
-				else
-				{
-					whichFrame = 0;
-					ethernetPleaseSend(2, sizeof(struct bigEtherFrame));
-				}
+		// Once every 256 samples (1024 bytes total) we will switch buffers
+		// and ask the EMAC to please send the buffer that we just filled:
+		if (whichSampleInPayload > 255) {
+			whichSampleInPayload = 0;
+			if (whichFrame == 0) {
+				whichFrame = 1;
+				ethernetPleaseSend(2, sizeof(struct bigEtherFrame));
+			} else {
+				whichFrame = 0;
+				ethernetPleaseSend(3, sizeof(struct bigEtherFrame));
 			}
+		}
+
+		// We will send 4 packets total, then stop the trigger:
+		totalBytesSent++;
+		if (totalBytesSent > 4096) {
+			weAreSending = 0;
+			totalBytesSent = 0;
+			triggerEnabled = 0;
+			whichSampleInPayload = 0;
+		}
+
+	} else { // waiting for a trigger
+
+		if ((adcChannel == triggerChannel) && triggerEnabled) {
+
+			if (triggerDirection) { // 1 is rising, 0 is falling
+				if ((prevTriggerSamples[2] < triggerLevel) && (prevTriggerSamples[1] < triggerLevel) &&
+					(prevTriggerSamples[0] > triggerLevel) && (adcValue > triggerLevel)) {
+					weAreSending = 1;
+					triggerEnabled = 0;
+				}
+
+			} else { // falling trigger
+
+				if ((prevTriggerSamples[2] > triggerLevel) && (prevTriggerSamples[1] > triggerLevel) &&
+					(prevTriggerSamples[0] < triggerLevel) && (adcValue < triggerLevel)) {
+					weAreSending = 1;
+					triggerEnabled = 0;
+				}
+
+			}
+			prevTriggerSamples[2] = prevTriggerSamples[1];
+			prevTriggerSamples[1] = prevTriggerSamples[0];
+			prevTriggerSamples[0] = adcValue;
 		}
 	}
 
@@ -84,34 +185,34 @@ void ADC_IRQHandler (void)
 }
 
 
-void ADCInit(void)
-{
-	uint32_t i;
+void ADCInit(void) {
 	uint32_t pclk;
-	uint8_t clkdiv;
+	//uint8_t clkdiv;
 
+	LPC_SC->PCONP |= bit12; // Power Control PCADC bit
+
+	weAreSending = 1;
 	whichFrame = 0;
-	whichByteInPayload = 0;
+	whichSampleInPayload = 0;
+	totalBytesSent = 0;
+	//prevTriggerSample = 0;
 
-	for ( i = 0; i < ADC_NUM; i++ )
-	{
-		ADCValue[i] = 0x0;
-	}
-
-	// Enable ADC controller:
-	LPC_SC->PCONP |= (1 << 12);
-
-	// We're only going to use two ADC pins: 
+	// We're going to use four ADC pins: 
+	//	P0.24 == AD0.1 (pin 16 on the mbed)
+	//	P0.25 == AD0.2 (pin 17 on the mbed)
 	//	P1.30 == AD0.4 (pin 19 on the mbed)
 	//	P1.31 == AD0.5 (pin 20 on the mbed)
-	LPC_PINCON->PINSEL3 |= 0xF0000000;  // AD0.4 and AD0.5
-	//LPC_PINCON->PINSEL3 |= 0xC0000000;  // AD0.5 only
+
+	LPC_PINCON->PINSEL1 &= ~0x000f0000;  // AD0.1 and AD0.2
+	LPC_PINCON->PINSEL1 |= 0x00050000;  // AD0.1 and AD0.2
+
+	LPC_PINCON->PINSEL3 |= 0xf0000000;  // AD0.4 and AD0.5
 
 	// No pull-up no pull-down (function 10) on these ADC pins:
+	LPC_PINCON->PINMODE1 &= ~0x000f0000;  // AD0.1 and AD0.2
+	LPC_PINCON->PINMODE1 |= 0x000a0000;  // AD0.1 and AD0.2
 	LPC_PINCON->PINMODE3 &= ~0xf0000000;  // AD0.4 and AD0.5
 	LPC_PINCON->PINMODE3 |= 0xa0000000;  // AD0.4 and AD0.5
-	//LPC_PINCON->PINMODE3 &= ~0xC0000000;  // AD0.5 only
-	//LPC_PINCON->PINMODE3 |= 0x80000000;  // AD0.5 only
 
 
 	// The ADC clock rate is:   pclk / (clkdiv + 1)
@@ -125,21 +226,25 @@ void ADCInit(void)
 	// ** Example:
 	//  clkdiv = (pclk / SAMPLE_RATE - 1)
 
-	// With two channels and my divide-by-four trick, this ends ups being very close
-	// to 24400 SPS.  Not sure why:
-	clkdiv = 1;
+/*
+	// In theory, this should give me a sample rate of 192.3 KSPS, but in fact
+	// it gives about 195.2 KSPS (~1.5% higher).  Not sure why...
+	//clkdiv = 1;
+	clkdiv = 3;
 
-	LPC_ADC->ADCR = (1<<4) | (1<<5) // Enable channels 4 and 5
+	LPC_ADC->ADINTEN = bit1 | bit2 | bit4 | bit5; // Enable interrupts for channels 1, 2, 4 and 5
+
+	LPC_ADC->ADCR = bit1 | bit2 | bit4 | bit5 // Enable channels 1, 2, 4 and 5
 		| ( clkdiv << 8 )
-		| ( 1 << 16 )   // BURST
-		| ( 1 << 21 )   // PDN = 1, normal operation
-		| ( 0 << 24 )   // START = 0 A/D conversion stops
-		| ( 0 << 27 );  // EDGE = 0 (CAP/MAT singal falling,trigger A/D conversion)
+		| bit16  // BURST
+		| bit21;  // PDN = 1, normal operation
+		//| ( 0 << 24 )   // START = 0 A/D conversion stops
+		//| ( 0 << 27 );  // EDGE = 0 (CAP/MAT singal falling,trigger A/D conversion)
+*/
 
 	NVIC_EnableIRQ(ADC_IRQn);
 
-	LPC_ADC->ADINTEN = (1<<4) | (1<<5);  // Enable interrupts for channels 4 and 5
-
-	return;
+	currentChannel = 1; // Global var, used by ADC_startOneSample():
+	ADC_startOneSample();
 }
 

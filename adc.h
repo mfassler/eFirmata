@@ -19,5 +19,7 @@
 
 extern void ADC_IRQHandler(void);
 extern void ADCInit(void);
+extern void adc2network(uint8_t, uint8_t );
+
 
 #endif // __ADC_H
