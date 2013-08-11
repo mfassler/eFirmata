@@ -19,7 +19,7 @@
 
 /* EMAC Memory Buffer configuration for 16K Ethernet RAM. */
 #define NUM_RX_FRAG         4           /* Num.of RX Fragments 4*1536= 6.0kB */
-#define NUM_TX_FRAG         3           /* Num.of TX Fragments 3*1536= 4.6kB */
+#define NUM_TX_FRAG         4           /* Num.of TX Fragments 3*1536= 4.6kB */
 #define ETH_FRAG_SIZE       1536        /* Packet Fragment size 1536 Bytes   */
 
 #define ETH_MAX_FLEN        1536        /* Max. Ethernet Frame Size          */
