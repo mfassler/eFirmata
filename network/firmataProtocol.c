@@ -8,7 +8,7 @@
 #include "network/MAC_ADDRESSES.h"
 
 #include "ssp.h"
-#include "modules/stepperControl_dSpin.h"
+//#include "modules/stepperControl_dSpin.h"
 
 #define FLIP_ENDIAN_16(x) ( (x & 0xff00) >> 8 ) | ( (x & 0x00ff) << 8)
 

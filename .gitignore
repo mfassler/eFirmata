@@ -1,1 +1,7 @@
+
+*.swp
 *.o
+eFirmata.bin
+eFirmata.elf
+eFirmata.map
+
