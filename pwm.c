@@ -14,16 +14,16 @@ void PWM_Init(void) {
 	//LPC_PWM1->PR = 0x00;		// count frequency:Fpclk
 	// TODO:  pclk should be checked against pclkdiv:
 	// PWM Freq =  (pclk / (PR +1)) / MR0
-	LPC_PWM1->PR = 0x03;		// count frequency / PWM_cycle = ~25 KHz 
-	LPC_PWM1->MCR = PWMMR0I;	/* interrupt on PWMMR0, reset on PWMMR0, reset 
-								   TC if PWM matches */				
-	LPC_PWM1->MR0 = 0xff;		// count frequency / PWM_cycle = ~25 KHz
+	LPC_PWM1->PR = 3;  // count frequency / PWM_cycle = ~25 KHz
+	//LPC_PWM1->PR = 240;  // count frequency / PWM_cycle = ~400 Hz
+	LPC_PWM1->MCR = PWMMR0I;  // interrupt on PWMMR0, reset on PWMMR0, reset TC if PWM matches
+	LPC_PWM1->MR0 = 0xff;  // count frequency / PWM_cycle = ~25 KHz
 	LPC_PWM1->MR1 = 0;
 	LPC_PWM1->MR2 = 0;
 	LPC_PWM1->MR3 = 0;
 	LPC_PWM1->MR4 = 0;
 	LPC_PWM1->MR5 = 0;
-	LPC_PWM1->MR6 = 0;	
+	LPC_PWM1->MR6 = 0;
 
 	// all PWM latch enabled
 	LPC_PWM1->LER = LER0_EN | LER1_EN | LER2_EN | LER3_EN | LER4_EN | LER5_EN | LER6_EN;
