@@ -59,8 +59,8 @@ void sendOneSensorPacket (void) {
 	// Digital inputs for the eFirmata protocol: P1.24 through P1.31
 	mySensorPacket->inputByte = (LPC_GPIO1->FIOPIN >> 24) & 0xff;
 
-	mySensorPacket->stepperPosition = stepperPosition;
-	mySensorPacket->targetPosition = targetPosition;
+	//mySensorPacket->stepperPosition = stepperPosition;
+	//mySensorPacket->targetPosition = targetPosition;
 
 
 	if (LPC_GPIO0->FIOPIN & bit0) {
@@ -82,7 +82,7 @@ void sendOneSensorPacket (void) {
 	}
 	mySensorPacket->happyMessage[0] = i;
 */
-	mySensorPacket->happyMessage[0] = SSP0_readFromFIFO(&mySensorPacket->happyMessage[1], 8);
+	//mySensorPacket->happyMessage[0] = SSP0_readFromFIFO(&mySensorPacket->happyMessage[1], 8);
 
 	mySensorPacket->happyMessage[12] = 0xff & whichSensorPacket;
 	mySensorPacket->happyMessage[13] = 0xff & whichEmacDMABuffer;

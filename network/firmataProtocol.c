@@ -38,6 +38,7 @@ void parseIncomingFirmataPacket(struct incomingFirmataPacket *ptr) {
 		SSP0Send(ptr->sspCommand, numSspBytes);
 	}
 
+/*
 	if (ptr->stepperCmd == 'l') {
 		stepperControl_goLeft();
 	} else if (ptr->stepperCmd == 'r') {
@@ -52,6 +53,8 @@ void parseIncomingFirmataPacket(struct incomingFirmataPacket *ptr) {
 	} else if (targetPosition < 20) {
 		targetPosition = 20;
 	}
+*/
+
 }
 
 extern volatile uint8_t triggerLevel;
