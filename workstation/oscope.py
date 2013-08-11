@@ -53,7 +53,7 @@ fileSocketControl.connect(fileNameControl)
 
 
 TRIGGERMODE_OFF = 0
-TRIGGERMODE_ONESHOT = 1
+TRIGGERMODE_NOW = 1
 TRIGGERMODE_RISING = 2
 TRIGGERMODE_FALLING = 3
 TRIGGERMODE_CONTINUOUS = 4
@@ -63,8 +63,8 @@ def getTriggeredSample(channel, threshold, triggerModeStr):
 
     if triggerModeStr == "off":
         trigMode = TRIGGERMODE_OFF
-    elif triggerModeStr == "oneshot":
-        trigMode = TRIGGERMODE_ONESHOT
+    elif triggerModeStr == "now":
+        trigMode = TRIGGERMODE_NOW
     elif triggerModeStr == "rising":
         trigMode = TRIGGERMODE_RISING
     elif triggerModeStr == "falling":
@@ -223,7 +223,7 @@ def pygameStyle():
 
 
 def pygameXYscope():
-    chA, chB, chC, chD = getTriggeredSample(1, 100, "oneshot")
+    chA, chB, chC, chD = getTriggeredSample(1, 100, 'now')
 
     # The window is 256x256, but we add 10 pixels of margin (top,bottom,r,l) to
     # make it look nicer
@@ -241,7 +241,7 @@ def pygameXYscope():
         oldChA = chA
         oldChB = chB
         try:
-            chA, chB, chC, chD = getTriggeredSample(1, 100, 'oneshot')
+            chA, chB, chC, chD = getTriggeredSample(1, 100, 'now')
             chA = chA + 10 # 10px of margin
             chB = 266 - chB  # flip y-axis, plus 10px of margin
         except:

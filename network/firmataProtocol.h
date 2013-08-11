@@ -46,7 +46,7 @@ struct incomingFirmataPacket {
 };
 
 #define TRIGGERMODE_OFF 0
-#define TRIGGERMODE_ONESHOT 1
+#define TRIGGERMODE_NOW 1
 #define TRIGGERMODE_RISING 2
 #define TRIGGERMODE_FALLING 3
 #define TRIGGERMODE_CONTINUOUS 4

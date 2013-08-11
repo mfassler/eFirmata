@@ -71,7 +71,7 @@ void parseIncomingFirmataControlPacket(struct incomingFirmataControlPacket *ptr)
 			adc_weAreSending = 0;
 			triggerEnabled = 0;
 			break;
-		case TRIGGERMODE_ONESHOT:
+		case TRIGGERMODE_NOW:
 			adc_weAreSending = 1;
 			break;
 		case TRIGGERMODE_RISING:
