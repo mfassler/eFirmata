@@ -31,8 +31,8 @@ volatile uint32_t interrupt1RxStat = 0;
 volatile uint32_t interrupt1OverRunStat = 0;
 volatile uint32_t interrupt1RxTimeoutStat = 0;
 
-void SSP0_IRQHandler(void) 
-{
+void SSP0_IRQHandler(void) {
+
 	uint32_t regValue;
 
 	regValue = LPC_SSP0->MIS; // MIS - Masked Interrupt Status Register
@@ -69,8 +69,8 @@ void SSP0_IRQHandler(void)
 }
 
 
-void SSP1_IRQHandler(void) 
-{
+void SSP1_IRQHandler(void) {
+
 	uint32_t regValue;
 
 	//debug("this is: SSP1_IRQHandler()");
@@ -103,8 +103,7 @@ void SSP1_IRQHandler(void)
 }
 
 
-void SSP0Init( void )
-{
+void SSP0Init(void) {
 	uint8_t nothing=nothing;
 	uint8_t i;
 
@@ -156,17 +155,17 @@ void SSP0Init( void )
 }
 
 
-void SSP1Init( void )
-{
+void SSP1Init(void) {
+
 	uint8_t i, Dummy=Dummy;
 
-	/* Enable AHB clock to the SSP1. */
+	// Enable AHB clock to the SSP1.
 	LPC_SC->PCONP |= (0x1<<10);
 
 	// The peripheral clock.  Leave at default (divide by 4)
 	//setPeripheralClock(PCLK_SSP1, 4);
 
-	/* P0.6~0.9 as SSP1 */
+	// P0.6~0.9 as SSP1
 	LPC_PINCON->PINSEL0 &= ~((0x3<<12)|(0x3<<14)|(0x3<<16)|(0x3<<18));
 	LPC_PINCON->PINSEL0 |= ((0x2<<12)|(0x2<<14)|(0x2<<16)|(0x2<<18));
 
@@ -174,27 +173,26 @@ void SSP1Init( void )
 	// We use P0.0 as CS for KXP84 #1
 	LPC_PINCON->PINSEL0 &= ~(0x3 << 12);  // P0.6 is GPIO
 	LPC_PINCON->PINSEL0 &= ~(0x3 << 0);   // P0.0 is GPIO
-	LPC_GPIO0->FIODIR |= (1 << 6); // P0.6 is an output
-	LPC_GPIO0->FIODIR |= (1 << 0); // P0.0 is an output
-	LPC_GPIO0->FIOSET = (1 << 6);   // The KXP84 Accelerometer likes it high...
-	LPC_GPIO0->FIOSET = (1 << 0);   // The KXP84 Accelerometer likes it high...
+	LPC_GPIO0->FIODIR |= bit6;  // P0.6 is an output
+	LPC_GPIO0->FIODIR |= bit0;  // P0.0 is an output
+	LPC_GPIO0->FIOSET = bit6;   // The KXP84 Accelerometer likes it high...
+	LPC_GPIO0->FIOSET = bit0;  // The KXP84 Accelerometer likes it high...
 
-	/* Set DSS data to 8-bit, Frame format SPI, CPOL = 0, CPHA = 0, and SCR is 15 */
+	// Set DSS data to 8-bit, Frame format SPI, CPOL = 0, CPHA = 0, and SCR is 15
 	LPC_SSP1->CR0 = 0x0707;
 
-	/* SSPCPSR clock prescale register, master mode, minimum divisor is 0x02 */
+	// SSPCPSR clock prescale register, master mode, minimum divisor is 0x02
 	LPC_SSP1->CPSR = 0x2;
 
-	for ( i = 0; i < FIFOSIZE; i++ )
-	{
-		Dummy = LPC_SSP1->DR;   /* clear the RxFIFO */
+	for (i = 0; i < FIFOSIZE; i++) {
+		Dummy = LPC_SSP1->DR;   // clear the RxFIFO
 	}
 
-	/* Enable the SSP Interrupt */
+	// Enable the SSP Interrupt
 	NVIC_EnableIRQ(SSP1_IRQn);
 	
-	/* Device select as master, SSP Enabled */
-	/* Master mode */
+	// Device select as master, SSP Enabled
+	// Master mode
 	LPC_SSP1->CR1 = SSPCR1_SSE;
 	/* Set SSPINMS registers to enable interrupts */
 	/* enable all error related interrupts */
@@ -242,6 +240,7 @@ int SSP0Send(char *buf, int length) {
 
 
 void SSP0_sendBytes(void) {
+
 	uint8_t numBytesToSend;
 
 	// Check for space in the Tx FIFO:
@@ -267,14 +266,14 @@ void SSP0_sendBytes(void) {
 
 
 
-void SSP1Send(uint8_t *buf, uint32_t Length)
-{
+void SSP1Send(uint8_t *buf, uint32_t Length) {
+
 	uint32_t i;
 	uint8_t Dummy = Dummy;
 
 	debug("SSP1Send()");
-	for ( i = 0; i < Length; i++ )
-	{
+	for (i = 0; i < Length; i++) {
+
 		/* Move on only if NOT busy and TX FIFO not full. */
 		while ( (LPC_SSP1->SR & (SSPSR_TNF|SSPSR_BSY)) != SSPSR_TNF );
 		LPC_SSP1->DR = *buf;
@@ -285,26 +284,24 @@ void SSP1Send(uint8_t *buf, uint32_t Length)
 		is left in the FIFO. */
 		Dummy = LPC_SSP1->DR;
 	}
-	LPC_GPIO0->FIOCLR = (1<<6);	
-	return; 
+
+	LPC_GPIO0->FIOCLR = bit6;	
 }
 
 
-/* This is for use with the KXP84 3-axis Accelerometer chip */
-void getAccel(uint8_t whichChip, uint16_t *x, uint16_t *y, uint16_t *z)
-{
+// This is for use with the KXP84 3-axis Accelerometer chip
+void getAccel(uint8_t whichChip, uint16_t *x, uint16_t *y, uint16_t *z) {
 	uint8_t nothing=nothing;
 	uint8_t LSByte;
 	uint8_t MSByte;
-	if (whichChip == 0)
-	{
+
+	if (whichChip == 0) {
 		LPC_GPIO0->FIOCLR = (1 << 6);  // CS low
-	}
-	else
-	{
+	} else {
 		LPC_GPIO0->FIOCLR = (1 << 0);  // CS low
 	}
-	/* Move on only if NOT busy and TX FIFO not full. */
+
+	// Move on only if NOT busy and TX FIFO not full.
 	while ( !(LPC_SSP1->SR & (SSPSR_TNF|SSPSR_BSY)) );
 
 	LPC_SSP1->DR = 0x80;
@@ -343,46 +340,39 @@ void getAccel(uint8_t whichChip, uint16_t *x, uint16_t *y, uint16_t *z)
 
 	*z = (MSByte << 8) | LSByte;
 
-	if (whichChip == 0)
-	{
-		LPC_GPIO0->FIOSET = (1 << 6);  // CS high
-	}
-	else
-	{
-		LPC_GPIO0->FIOSET = (1 << 0);  // CS high
+	if (whichChip == 0) {
+		LPC_GPIO0->FIOSET = bit6;  // CS high
+	} else {
+		LPC_GPIO0->FIOSET = bit0;  // CS high
 	}
 
 	return;
 }
 
 
-void SSPReceive( uint32_t portnum, uint8_t *buf, uint32_t Length )
-{
+void SSPReceive(uint32_t portnum, uint8_t *buf, uint32_t Length) {
 	uint32_t i;
  
-	for ( i = 0; i < Length; i++ )
-	{
-		/* As long as Receive FIFO is not empty, I can always receive. */
-		/* If it's a loopback test, clock is shared for both TX and RX,
-		no need to write dummy byte to get clock to get the data */
-		/* if it's a peer-to-peer communication, SSPDR needs to be written
-		before a read can take place. */
-		if ( portnum == 0 )
-		{
+	for (i = 0; i < Length; i++) {
+		// As long as Receive FIFO is not empty, I can always receive. 
+		// If it's a loopback test, clock is shared for both TX and RX,
+		// no need to write dummy byte to get clock to get the data */
+		// if it's a peer-to-peer communication, SSPDR needs to be written
+		//b efore a read can take place.
+		if (portnum == 0) {
 			LPC_SSP0->DR = 0xFF;
-			/* Wait until the Busy bit is cleared */
+			// Wait until the Busy bit is cleared:
 			while ( (LPC_SSP0->SR & (SSPSR_BSY|SSPSR_RNE)) != SSPSR_RNE );
 			*buf++ = LPC_SSP0->DR;
-		}
-		else if ( portnum == 1 )
-		{
+
+		} else if ( portnum == 1 ) {
+
 			LPC_SSP1->DR = 0xFF;
-			/* Wait until the Busy bit is cleared */
+			// Wait until the Busy bit is cleared:
 			while ( (LPC_SSP1->SR & (SSPSR_BSY|SSPSR_RNE)) != SSPSR_RNE );
 			*buf++ = LPC_SSP1->DR;
 		}
 	}
-	return; 
 }
 
 
