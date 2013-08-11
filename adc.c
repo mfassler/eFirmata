@@ -21,15 +21,17 @@
 extern struct bigEtherFrame *bigEtherFrameA;
 extern struct bigEtherFrame *bigEtherFrameB;
 
-volatile uint16_t weAreSending;
 volatile uint16_t whichFrame;
 volatile uint16_t whichSampleInPayload;
-volatile uint16_t totalBytesSent;
+
+volatile uint16_t adc_currentSampleNumber;
 
 volatile uint8_t triggerLevel;
 volatile uint8_t triggerDirection;
 volatile uint8_t triggerChannel;
 volatile uint8_t triggerEnabled;
+volatile uint16_t triggerNumSamplesReq;
+volatile uint8_t adc_weAreSending;
 
 volatile uint8_t currentChannel;
 
@@ -116,7 +118,7 @@ void adc2network(uint8_t adcChannel, uint8_t adcValue) {
 			offset = 0;
 	}
 
-	if (weAreSending) {
+	if (adc_weAreSending) {
 
 		// We have two ethernet frames in DMA memory.  We alternate between
 		// those two frames:
@@ -131,10 +133,12 @@ void adc2network(uint8_t adcChannel, uint8_t adcValue) {
 
 		if (adcChannel > 4) {
 			whichSampleInPayload++;
+			adc_currentSampleNumber++;
 		}
 
 		// Once every 256 samples (1024 bytes total) we will switch buffers
 		// and ask the EMAC to please send the buffer that we just filled:
+		// TODO: this presumes 4 channels and fixed sizes, etc...
 		if (whichSampleInPayload > 255) {
 			whichSampleInPayload = 0;
 			if (whichFrame == 0) {
@@ -146,12 +150,11 @@ void adc2network(uint8_t adcChannel, uint8_t adcValue) {
 			}
 		}
 
-		// We will send 4 packets total, then stop the trigger:
-		totalBytesSent++;
-		if (totalBytesSent > 4096) {
-			weAreSending = 0;
-			totalBytesSent = 0;
+		// When we hit the max number of samples, we stop:
+		if (adc_currentSampleNumber > triggerNumSamplesReq) {
+			adc_weAreSending = 0;
 			triggerEnabled = 0;
+			adc_currentSampleNumber = 0;
 			whichSampleInPayload = 0;
 		}
 
@@ -162,7 +165,7 @@ void adc2network(uint8_t adcChannel, uint8_t adcValue) {
 			if (triggerDirection) { // 1 is rising, 0 is falling
 				if ((prevTriggerSamples[2] < triggerLevel) && (prevTriggerSamples[1] < triggerLevel) &&
 					(prevTriggerSamples[0] > triggerLevel) && (adcValue > triggerLevel)) {
-					weAreSending = 1;
+					adc_weAreSending = 1;
 					triggerEnabled = 0;
 				}
 
@@ -170,7 +173,7 @@ void adc2network(uint8_t adcChannel, uint8_t adcValue) {
 
 				if ((prevTriggerSamples[2] > triggerLevel) && (prevTriggerSamples[1] > triggerLevel) &&
 					(prevTriggerSamples[0] < triggerLevel) && (adcValue < triggerLevel)) {
-					weAreSending = 1;
+					adc_weAreSending = 1;
 					triggerEnabled = 0;
 				}
 
@@ -191,10 +194,10 @@ void ADCInit(void) {
 
 	LPC_SC->PCONP |= bit12; // Power Control PCADC bit
 
-	weAreSending = 1;
+	adc_weAreSending = 1;
 	whichFrame = 0;
 	whichSampleInPayload = 0;
-	totalBytesSent = 0;
+	adc_currentSampleNumber = 0;
 	//prevTriggerSample = 0;
 
 	// We're going to use four ADC pins: 

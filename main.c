@@ -7,44 +7,70 @@
 
 #include <LPC17xx.h>
 #include "bitTypes.h"
+
 #include "uart.h"
 #include "debug.h"
+#include "timer.h"
+
 #include "emac.h"
+
 #include "ssp.h"
 #include "adc.h"
 #include "dac.h"
 #include "pwm.h"
+//#include "gpioStuff.h"
 #include "modules/quadrature.h"
-#include "timer.h"
+//#include "modules/stepperControl_dSpin.h"
 
 #include "network/firmataProtocol.h"
 
 extern volatile uint16_t ADCValue[ADC_NUM];
-extern struct sensorPacket *mySensorPacket;
+extern struct sensorPacket *mySensorPacketA;
+extern struct sensorPacket *mySensorPacketB;
+//extern struct udpPacket *myUDPpacket;
 
 volatile uint32_t current_time;
 
-void jiffyAction (void) {
-	uint8_t i;
+extern volatile uint16_t stepperPosition;
+extern volatile uint16_t targetPosition;
 
+volatile int whichSensorPacket = 0;
+void sendOneSensorPacket (void) {
 	// Once every 10 ms we send sensor data to the PC.
+
+	// We have two DMA buffers.  We will alternate between those two.
+	// (ie, we prepare a packet, then send it, then next time we will
+	// prepare the other packet.  So hopefully we wont collide with the
+	// EthernetPleaseSend process...)
+	struct sensorPacket *mySensorPacket;
+	int whichEmacDMABuffer;
+
+	if (whichSensorPacket) {
+		mySensorPacket = mySensorPacketA;
+		whichSensorPacket = 0;
+		whichEmacDMABuffer = 0;
+	} else {
+		mySensorPacket = mySensorPacketB;
+		whichSensorPacket = 1;
+		whichEmacDMABuffer = 1;
+	}
+
 
 	// Digital inputs for the eFirmata protocol: P1.24 through P1.31
 	mySensorPacket->inputByte = (LPC_GPIO1->FIOPIN >> 24) & 0xff;
 
-	mySensorPacket->adcVal = ADCValue[4];   // bend sensor for right elbow
+	mySensorPacket->stepperPosition = stepperPosition;
+	mySensorPacket->targetPosition = targetPosition;
 
 
-	getAccel(0, &(mySensorPacket->xAccel0), 
-				&(mySensorPacket->yAccel0),
-				&(mySensorPacket->zAccel0)  );
-
-	getAccel(1, &(mySensorPacket->xAccel1), 
-				&(mySensorPacket->yAccel1),
-				&(mySensorPacket->zAccel1)  );
-
+	if (LPC_GPIO0->FIOPIN & bit0) {
+		mySensorPacket->busyBit = 1;
+	} else {
+		mySensorPacket->busyBit = 0;
+	}
 
 	// Check for data from SSP0:
+/*
 	i=0;
 	while (LPC_SSP0->SR & SSPSR_RNE) {  // RNE = Receive FIFO Not Empty
 		// Counting starts at 1
@@ -55,17 +81,26 @@ void jiffyAction (void) {
 		}
 	}
 	mySensorPacket->happyMessage[0] = i;
+*/
+	mySensorPacket->happyMessage[0] = SSP0_readFromFIFO(&mySensorPacket->happyMessage[1], 8);
 
+	mySensorPacket->happyMessage[12] = 0xff & whichSensorPacket;
+	mySensorPacket->happyMessage[13] = 0xff & whichEmacDMABuffer;
 
 	mySensorPacket->quadPositionA = quadrature_getPosition(0x00);
 
-	ethernetPleaseSend(0, sizeof(struct sensorPacket));
+	ethernetPleaseSend(whichEmacDMABuffer, sizeof(struct sensorPacket));
 }
 
 
 void SysTick_Handler (void) {
+	// Things to do 100 times per second!
 	current_time++;
-	jiffyAction();
+	sendOneSensorPacket();
+
+	// This is only used for the reflex board
+	// This function will check itself before running twice, etc:
+	//stepperControl_seekToAbsolutePosition();
 }
 
 
@@ -106,18 +141,21 @@ int main() {
 	// Digital inputs for the eFirmata protocol:
 	//LPC_GPIO1->FIODIR = // P1.24 through P1.31
 
-	ADCInit();
+	ADCInit(); // Interrupt usually occurs immediately, so ENET must be initialized already.
 	DACInit();
 	PWM_Init();
 	PWM_Start();
-	SSP0Init();
-	SSP1Init();
-	Quadrature_Init();
+	//SSP0Init();
+	//SSP1Init();
+
+	// Right now, these are only used for the Reflex board:
+	//GPIO_Interrupts_Init();
 
 	// ***** END:  Initialize peripherials
 
 
 	// Start the 100 Hz timer:
+	debugLong("SystemCoreClock: ", SystemCoreClock);
 	SysTick_Config (SystemCoreClock / 100);
 
 	while (1) {
