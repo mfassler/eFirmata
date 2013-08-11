@@ -15,8 +15,8 @@ import pygame
 
 
 # The Ethernet MAC address of the eFirmata we are talking to:
-redStripe_addr = "\x00\x02\xf7\xaa\xff\xee"
-
+#redStripe_addr = "\x00\x02\xf7\xaa\xff\xee"
+deviceEthernetAddress = "\x00\x02\xf7\xaa\xff\xee"
 
 
 ### firmataControl to send our request
@@ -51,7 +51,6 @@ fileSocketControl = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
 fileSocketControl.connect(fileNameControl)
 
 
-readingList = [mySocketRx]
 
 TRIGGERMODE_OFF = 0
 TRIGGERMODE_ONESHOT = 1
@@ -78,31 +77,66 @@ def getTriggeredSample(channel, threshold, triggerModeStr):
     # a "frame" is 256 samples.  So number of samples we want is number of frames*256
     trigNumFramesReq = 2  #we want 512 samples
 
+    sMax = trigNumFramesReq * 256 # maximum number of samples
+
+    numChannels = 4
+    chA = np.zeros(sMax)
+    chB = np.zeros(sMax)
+    chC = np.zeros(sMax)
+    chD = np.zeros(sMax)
+
     # Packet structure is: Mode, Channel, Threshold, NumFramesRequested
     trigCmd = chr(trigMode) + chr(channel & 0xff) + chr(threshold & 0xff) + chr(trigNumFramesReq)
 
-    fileSocketControl.send(redStripe_addr + trigCmd)
-    numPacketsReceived = 0
-    myPackets = []
+
+    # Clear out any old data first:
+    mySocketRx.setblocking(0)
+    try:
+        nothing = mySocketRx.recv(1522)
+    except:
+        pass
+    else:
+        while(nothing):
+            try:
+                nothing = mySocketRx.recv(1522)
+            except:
+                break
+    mySocketRx.setblocking(1)
+    # Incoming data should be empty.  Let us continue...
+
+
+    fileSocketControl.send(deviceEthernetAddress + trigCmd)
+
+    ## Right now, things are hard-coded for four channels, 256 samples per
+    ## ethernet frame (so the data portion that we care about is always 1024 bytes)
+    ## On each frame, the data is striped:  chA, chB, chC, chD, chA, chB, chC, chD, chA, ...
+    #DPACKET_SIZE = 1024
+    sStart = 0
+    sEnd = sStart + 256
+
+    readingList = [mySocketRx]
+
     while 1:
-        if numPacketsReceived >= trigNumFramesReq:
-            break
         inputs, outputs, errors = select.select(readingList, [], [], 1.1)
         if inputs:
             for oneInput in inputs:
                 if oneInput == mySocketRx:
-                    numPacketsReceived += 1
-                    inPacket, addr = mySocketRx.recvfrom(1522)
+                    inPacket = mySocketRx.recv(1522)
                     if len(inPacket) > 20:
-                        myPackets.append(inPacket[14:])
-        else: #timeout
+                        # These boundaries, 14:1038, are hard-coded into the eFirmata protocol
+                        stripedData = np.frombuffer(inPacket[14:1038], dtype=np.uint8)
+                        chA[sStart:sEnd] = stripedData[::4] #.copy()
+                        chB[sStart:sEnd] = stripedData[1::4] #.copy()
+                        chC[sStart:sEnd] = stripedData[2::4] #.copy()
+                        chD[sStart:sEnd] = stripedData[3::4] #.copy()
+                        sStart += 256
+                        sEnd = sStart + 256
+        else:
             print "timeout waiting for packet"
             break
-    oneRun = myPackets[0][:1024] + myPackets[1][:1024]  # ignoring the next two packets for now
-    chA = np.array(map(ord, oneRun[::4]))
-    chB = np.array(map(ord, oneRun[1::4]))
-    chC = np.array(map(ord, oneRun[2::4]))
-    chD = np.array(map(ord, oneRun[3::4]))
+        if sEnd > sMax:
+            break
+
     return chA, chB, chC, chD
 
 
@@ -110,7 +144,7 @@ def matplotlibStyle():
     plt.ion()
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    plt.ylim([-14, 270])
+    plt.ylim([-14, 270]) # little bit of whitespace for visual margin
 
     # First time:
     chA, chB, chC, chD = getTriggeredSample(1, 100, 'rising')
@@ -153,15 +187,16 @@ def pygameStyle():
     colorC = (0,0,255)
 
     while 1:
-        oldChA = chA #.copy()
-        oldChB = chB #.copy()
-        oldChC = chC #.copy()
+        oldChA = chA
+        oldChB = chB
+        oldChC = chC
+        #oldChD = chD
         try:
-            chA, chB, chC, chD = getTriggeredSample(1, 100, 'oneshot')
+            chA, chB, chC, chD = getTriggeredSample(1, 100, 'rising')
             chA = 266 - chA #flip y axis; add 10px margin
             chB = 266 - chB #flip y axis; add 10px margin
             chC = 266 - chC #flip y axis; add 10px margin
-            #chD = 266 - chD
+            #chD = 266 - chD #flip y axis; add 10px margin
         except:
             time.sleep(0.1)
             print ".",
@@ -203,12 +238,12 @@ def pygameXYscope():
     colorB = (0,255,0)
     colorC = (0,0,255)
     while 1:
-        oldChA = chA #.copy()
-        oldChB = chB #.copy()
+        oldChA = chA
+        oldChB = chB
         try:
             chA, chB, chC, chD = getTriggeredSample(1, 100, 'oneshot')
             chA = chA + 10 # 10px of margin
-            chB = 266 - chB #flip y-axis, plus 10px of margin
+            chB = 266 - chB  # flip y-axis, plus 10px of margin
         except:
             time.sleep(0.1)
             print ".",
