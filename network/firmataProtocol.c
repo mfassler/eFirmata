@@ -6,7 +6,6 @@
 #include "network/firmataProtocol.h"
 #include "emac.h"
 #include "network/MAC_ADDRESSES.h"
-//#include "network/arp.h"
 
 #include "ssp.h"
 //#include "modules/stepperControl_dSpin.h"

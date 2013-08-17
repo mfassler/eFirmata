@@ -172,8 +172,8 @@ void ENET_IRQHandler (void) {
 		// The buffer that we must consume:
 		idx = LPC_EMAC->RxConsumeIndex;
 
-		parseFrame( (char *)RX_DESC_PACKET(idx),		   // The address of the buffer
-					(RX_STAT_INFO(idx) & RINFO_SIZE) - 3   // The length of the buffer
+		parseFrame( (struct ethernetFrame *)RX_DESC_PACKET(idx),  // The address of the buffer
+					(RX_STAT_INFO(idx) & RINFO_SIZE) - 3  // The length of the buffer
 				  );
 
 		// Buffer consumed.  Move on to the next buffer:
@@ -206,7 +206,7 @@ void ethernetPleaseSend(void * bufAddr, unsigned short frameSize) {
 
 	// The literal memory address is fed to the EMAC-DMA controller:
 	TX_DESC_PACKET(idx) = (unsigned int) bufAddr;
-	TX_DESC_CTRL(idx) = frameSize | TCTRL_LAST;
+	TX_DESC_CTRL(idx) = (frameSize - 1) | TCTRL_LAST;
 
 	// EMAC, you have work do do:
 	LPC_EMAC->TxProduceIndex = idx;

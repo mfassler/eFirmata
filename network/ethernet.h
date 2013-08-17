@@ -5,7 +5,7 @@
 struct ethernetFrame {
 	char dest[6];
 	char src[6];
-	char type[2];
+	uint16_t type;
 
 	uint8_t payload[1500];
 
@@ -14,7 +14,7 @@ struct ethernetFrame {
 	uint32_t fcs;
 };
 
-extern void parseFrame(char*, unsigned short);
+extern void parseFrame(struct ethernetFrame*, unsigned int);
 extern void ethernetInitTxBuffers(void);
 extern struct ethernetFrame *ethernetGetNextTxBuffer(uint16_t);
 
