@@ -1,14 +1,9 @@
 
-void parseFrame(char*, unsigned short);
-void initOutgoingEthernetPackets(void);
+#ifndef __FIRMATA_PROTOCOL_H
+#define __FIRMATA_PROTOCOL_H
 
 
 struct sensorPacket {
-	char dest[6];
-	char src[6];
-	char prot[2];
-
-// This is the payload, 42 to 1500 bytes:
 	char subProt[4];
 
 	uint8_t inputByte;
@@ -25,8 +20,6 @@ struct sensorPacket {
 	//uint16_t zAccel1;
 	int16_t quadPositionA;
 	char happyMessage[24];
-
-	uint32_t fcs;
 };
 
 struct incomingFirmataPacket {
@@ -59,40 +52,8 @@ struct incomingFirmataControlPacket {
 };
 
 
-struct udpPacket {
-	uint8_t enetDest[6];
-	uint8_t enetSrc[6];
-	uint8_t enetProtocol[2]; // IP packet inside Ethernet
+extern void parseIncomingFirmataControlPacket(struct incomingFirmataControlPacket *);
+extern void parseIncomingFirmataPacket(struct incomingFirmataPacket *);
 
-	// This is the ethernet payload, 42 to 1500 bytes:
-	uint8_t ipVersion;  // 4bit version, 4bit header length
-	uint8_t diffServicesField; // 6bit DSCP and 3bit ECN
-	uint16_t totalLength;
-	uint16_t identification;
-	uint16_t flagsAndFragOffset; // 3bit flags, 13bit fragment offset
-	uint8_t ttl;
-	uint8_t ipProtocol; // UDP packet inside IP
-	uint16_t ipHeaderChecksum;
-	uint8_t srcIpAddr[4];
-	uint8_t destIpAddr[4];
-	uint16_t srcPort;
-	uint16_t destPort;
-	uint16_t length;
-	uint16_t udpChecksum;
-	unsigned char data[5];
+#endif // __FIRMATA_PROTOCOL_H
 
-	// Back to the ethernet frame:
-	uint32_t fcs;
-};
-
-
-
-struct bigEtherFrame {
-	char dest[6];
-	char src[6];
-	char prot[2];
-
-	uint8_t data[1030];
-
-	uint32_t fcs;
-};

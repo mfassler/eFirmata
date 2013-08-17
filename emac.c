@@ -25,12 +25,10 @@
 
 #include "ethernetPHY.h"
 #include "emac.h"
-#include "network/firmataProtocol.h"
-#include "network/MAC_ADDRESSES.h"
+#include "network/ethernet.h"
 
 #include "debug.h"
 #include "timer.h"
-
 
 
 // Tell the EMAC where to receive data into DMA memory:
@@ -98,9 +96,9 @@ void setLinkMode(uint8_t speed, uint8_t duplex) {
 }
 
 
+extern char myMacAddress[];
 
 void Init_EMAC(void) {
-	const char myAddress[] = SELF_ADDR;
 
 	// Power Up the EMAC controller.
 	LPC_SC->PCONP |= (0x1<<30);
@@ -137,9 +135,10 @@ void Init_EMAC(void) {
 	enetPHY_Init();  // blinks LED#3, ends on LED#4
 
 	// Set the Ethernet MAC Address registers
-	LPC_EMAC->SA0 = (myAddress[5] << 8) | myAddress[4];
-	LPC_EMAC->SA1 = (myAddress[3] << 8) | myAddress[2];
-	LPC_EMAC->SA2 = (myAddress[1] << 8) | myAddress[0];
+	// myMacAddress is declared in main.c
+	LPC_EMAC->SA0 = (myMacAddress[5] << 8) | myMacAddress[4];
+	LPC_EMAC->SA1 = (myMacAddress[3] << 8) | myMacAddress[2];
+	LPC_EMAC->SA2 = (myMacAddress[1] << 8) | myMacAddress[0];
 
 	// Initialize Tx and Rx DMA Descriptors
 	rxDescriptorInit();
@@ -192,7 +191,7 @@ void ENET_IRQHandler (void) {
 
 
 
-void ethernetPleaseSend(unsigned short whichBuffer, unsigned short frameSize) {
+void ethernetPleaseSend(void * bufAddr, unsigned short frameSize) {
 	unsigned int idx;
 
 	// What is the next buffer index?
@@ -204,7 +203,9 @@ void ethernetPleaseSend(unsigned short whichBuffer, unsigned short frameSize) {
 	// Point the way to the buffer:
 	TX_DESC_CTRL(idx)   = 0;
 	TX_STAT_INFO(idx)   = 0;
-	TX_DESC_PACKET(idx) = TX_BUF(whichBuffer);
+
+	// The literal memory address is fed to the EMAC-DMA controller:
+	TX_DESC_PACKET(idx) = (unsigned int) bufAddr;
 	TX_DESC_CTRL(idx) = frameSize | TCTRL_LAST;
 
 	// EMAC, you have work do do:

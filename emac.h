@@ -18,8 +18,8 @@
 
 
 /* EMAC Memory Buffer configuration for 16K Ethernet RAM. */
-#define NUM_RX_FRAG         4           /* Num.of RX Fragments 4*1536= 6.0kB */
-#define NUM_TX_FRAG         4           /* Num.of TX Fragments 3*1536= 4.6kB */
+#define NUM_RX_FRAG         4           /* Num.of RX Fragments 4*1536= 6.0 KB */
+#define NUM_TX_FRAG         6           /* Num.of TX Fragments 6*1536= 9.0 KB */
 #define ETH_FRAG_SIZE       1536        /* Packet Fragment size 1536 Bytes   */
 
 #define ETH_MAX_FLEN        1536        /* Max. Ethernet Frame Size          */
@@ -300,7 +300,7 @@
 
 // prototypes
 void Init_EMAC(void);
-void ethernetPleaseSend(unsigned short, unsigned short);
+void ethernetPleaseSend(void *, unsigned short);
 void setLinkMode(uint8_t, uint8_t);  // used by enetPHY_Init()
 
 #endif

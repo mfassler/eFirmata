@@ -15,11 +15,11 @@
 #include "debug.h"
 
 #include "emac.h"
-#include "network/MAC_ADDRESSES.h"
+#include "network/ethernet.h"
 #include "network/firmataProtocol.h"
 
-extern struct bigEtherFrame *bigEtherFrameA;
-extern struct bigEtherFrame *bigEtherFrameB;
+extern struct ethernetFrame *bigEtherFrameA;
+extern struct ethernetFrame *bigEtherFrameB;
 
 volatile uint16_t whichFrame;
 volatile uint16_t whichSampleInPayload;
@@ -97,7 +97,7 @@ void ADC_IRQHandler(void) {
 
 
 void adc2network(uint8_t adcChannel, uint8_t adcValue) {
-	struct bigEtherFrame *aFrame;
+	struct ethernetFrame *aFrame;
 	uint8_t offset;
 	static uint8_t prevTriggerSamples[] = {0,0,0};
 
@@ -129,7 +129,7 @@ void adc2network(uint8_t adcChannel, uint8_t adcValue) {
 		}
 
 		// Write a byte to the next position in the frame:
-		aFrame->data[whichSampleInPayload * 4 + offset] = adcValue;
+		aFrame->payload[whichSampleInPayload * 4 + offset] = adcValue;
 
 		if (adcChannel > 4) {
 			whichSampleInPayload++;
@@ -143,10 +143,10 @@ void adc2network(uint8_t adcChannel, uint8_t adcValue) {
 			whichSampleInPayload = 0;
 			if (whichFrame == 0) {
 				whichFrame = 1;
-				ethernetPleaseSend(2, sizeof(struct bigEtherFrame));
+				ethernetPleaseSend(aFrame, sizeof(struct ethernetFrame));
 			} else {
 				whichFrame = 0;
-				ethernetPleaseSend(3, sizeof(struct bigEtherFrame));
+				ethernetPleaseSend(aFrame, sizeof(struct ethernetFrame));
 			}
 		}
 

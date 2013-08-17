@@ -13,28 +13,28 @@
 #include "timer.h"
 
 #include "emac.h"
+#include "network/ethernet.h"
 
 #include "ssp.h"
 #include "adc.h"
 #include "dac.h"
 #include "pwm.h"
 //#include "gpioStuff.h"
-#include "modules/quadrature.h"
+//#include "modules/quadrature.h"
 //#include "modules/stepperControl_dSpin.h"
 
 #include "network/firmataProtocol.h"
 
-extern volatile uint16_t ADCValue[ADC_NUM];
-extern struct sensorPacket *mySensorPacketA;
-extern struct sensorPacket *mySensorPacketB;
-//extern struct udpPacket *myUDPpacket;
+// would love for this to be generated from the internal serial number or something... 
+#include "network/MAC_ADDRESSES.h"
+const char myMacAddress[6] = SELF_ADDR;
+
 
 volatile uint32_t current_time;
 
 extern volatile uint16_t stepperPosition;
 extern volatile uint16_t targetPosition;
 
-volatile int whichSensorPacket = 0;
 void sendOneSensorPacket (void) {
 	// Once every 10 ms we send sensor data to the PC.
 
@@ -42,19 +42,16 @@ void sendOneSensorPacket (void) {
 	// (ie, we prepare a packet, then send it, then next time we will
 	// prepare the other packet.  So hopefully we wont collide with the
 	// EthernetPleaseSend process...)
+	struct ethernetFrame *mySensorFrame;
 	struct sensorPacket *mySensorPacket;
-	int whichEmacDMABuffer;
 
-	if (whichSensorPacket) {
-		mySensorPacket = mySensorPacketA;
-		whichSensorPacket = 0;
-		whichEmacDMABuffer = 0;
-	} else {
-		mySensorPacket = mySensorPacketB;
-		whichSensorPacket = 1;
-		whichEmacDMABuffer = 1;
-	}
-
+	// eFirmata-over-ethernet protocol is 0x181c:
+	mySensorFrame = ethernetGetNextTxBuffer(0x181c);
+	mySensorPacket = (struct sensorPacket *) &(mySensorFrame->payload);
+	mySensorPacket->subProt[0] = ':';
+	mySensorPacket->subProt[1] = '-';
+	mySensorPacket->subProt[2] = ')';
+	mySensorPacket->subProt[3] = 0x01;
 
 	// Digital inputs for the eFirmata protocol: P1.24 through P1.31
 	mySensorPacket->inputByte = (LPC_GPIO1->FIOPIN >> 24) & 0xff;
@@ -84,12 +81,10 @@ void sendOneSensorPacket (void) {
 */
 	//mySensorPacket->happyMessage[0] = SSP0_readFromFIFO(&mySensorPacket->happyMessage[1], 8);
 
-	mySensorPacket->happyMessage[12] = 0xff & whichSensorPacket;
-	mySensorPacket->happyMessage[13] = 0xff & whichEmacDMABuffer;
 
-	mySensorPacket->quadPositionA = quadrature_getPosition(0x00);
+	//mySensorPacket->quadPositionA = quadrature_getPosition(0);
 
-	ethernetPleaseSend(whichEmacDMABuffer, sizeof(struct sensorPacket));
+	ethernetPleaseSend(mySensorFrame, sizeof(struct sensorPacket));
 }
 
 
@@ -124,7 +119,7 @@ int main() {
 	debug("Done with Init_EMAC().");
 
 	// Set the src_address, dest_address, etc:
-	initOutgoingEthernetPackets();  // This must occur before ADC init
+	ethernetInitTxBuffers();  // This must occur before ADC init
 
 
 	LPC_GPIO1->FIOSET = bit23;  // Turn on blinky LED #4
