@@ -25,8 +25,7 @@ an ethernet switch is a nice way to multiplex a gigabit connection
 
 Low-latency.  The most extreme, but realistic example I can think 
 of is streaming audio.  I want small buffers with as-low-of-latency 
-as possible.  This is why I don't bother with TCP/IP.  Data is put 
-onto an ethernet frame as quickly as possible.  
+as possible.  
 
 
 ### Number 3:
