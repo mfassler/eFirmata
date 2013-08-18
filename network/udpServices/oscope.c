@@ -8,6 +8,9 @@
 
 #include "adc.h"
 
+const char FIRMATA_ID_SUBTOKEN[3] = "TOS"; // This is TriggeredOscilloScope
+const uint8_t FIRMATA_TOS_VERSION = 0;
+
 void incomingOscopeOverUdp(struct ethernetFrame *frame, unsigned int length) {
 	struct ipPacket *ip;
 	struct udpPacket *udp;
@@ -23,6 +26,18 @@ void incomingOscopeOverUdp(struct ethernetFrame *frame, unsigned int length) {
 		if (cmd->idToken[i] != FIRMATA_ID_TOKEN[i]) {
 			return;
 		}
+	}
+
+	// Check that this is for Triggered OscilloScope:
+	for (i=0; i<3; i++) {
+		if (cmd->idSubToken[i] != FIRMATA_ID_SUBTOKEN[i]) {
+			return;
+		}
+	}
+
+	// We only support protocol version 0:
+	if (cmd->version != 0) {
+		return;
 	}
 
 	triggerChannel = cmd->triggerChannel;

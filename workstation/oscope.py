@@ -71,7 +71,17 @@ def getTriggeredSample(channel, threshold, triggerModeStr):
     mySocket.setblocking(1)
     # Incoming data should be empty.  Let us continue...
 
-    firmataOverUdpHeader = "eFirmata" + "\x00\x00\x00\x00"
+    # For the firmata-over-UDP protocol, we must declare ourselves to be "eFirmata".
+    firmataOverUdpHeader = "eFirmata"
+    # The firmata service we want: TOS (Triggered OscilloScope):
+    firmataOverUdpHeader += "TOS"
+    # Protocol version 0:
+    firmataOverUdpHeader += "\x00"
+    # No Flags, no options:
+    firmataOverUdpHeader += "\x00\x00\x00\x00"
+    # The firmata-over-udp header should be exactly 16 bytes:
+    assert len(firmataOverUdpHeader) == 16, "BUG.  You broke it."
+
     mySocket.send(firmataOverUdpHeader + trigCmd)
 
     ## Right now, things are hard-coded for four channels, 256 samples per
