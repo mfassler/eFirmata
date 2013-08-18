@@ -38,22 +38,8 @@ struct incomingFirmataPacket {
 	uint16_t setPosition;
 };
 
-#define TRIGGERMODE_OFF 0
-#define TRIGGERMODE_NOW 1
-#define TRIGGERMODE_RISING 2
-#define TRIGGERMODE_FALLING 3
-#define TRIGGERMODE_CONTINUOUS 4
-
-struct incomingFirmataControlPacket {
-	uint8_t triggerMode;
-	uint8_t triggerChannel;
-	uint8_t triggerLevel;
-	uint8_t triggerNumFramesReq;
-};
-
-
-extern void parseIncomingFirmataControlPacket(struct incomingFirmataControlPacket *);
 extern void parseIncomingFirmataPacket(struct incomingFirmataPacket *);
+
 
 #endif // __FIRMATA_PROTOCOL_H
 

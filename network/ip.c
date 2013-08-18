@@ -27,3 +27,34 @@ void parseIncomingIpPacket(struct ethernetFrame *frame, unsigned int length) {
 }
 
 
+uint16_t internetChecksum(void * addr, unsigned int count) {
+	/*
+	 * Compute Internet Checksum for "count" bytes beginning at location "addr".
+	 * This is from RFC 1071
+	 */
+
+	register long sum = 0;
+	uint16_t *ptr;
+	ptr = (uint16_t *) addr;
+
+	while (count > 1) {
+		//sum += *(uint16_t *) addr++;
+		sum += *ptr++;
+		count -= 2;
+	}
+
+	//  Add left-over byte, if any 
+	if (count > 0) {
+		//sum += *(uint8_t *) addr;
+		sum += *(uint8_t *)ptr;
+	}
+
+	// Fold 32-bit sum to 16 bits
+	while (sum >> 16) {
+		sum = (sum & 0xffff) + (sum >> 16);
+	}
+
+	return (uint16_t) ~sum;
+}
+
+

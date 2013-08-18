@@ -16,15 +16,14 @@
 
 #include "emac.h"
 #include "network/ethernet.h"
+#include "network/ip.h"
+#include "network/udp.h"
 #include "network/firmataProtocol.h"
+#include "network/endian.h"
+
 
 extern struct ethernetFrame *bigEtherFrameA;
 extern struct ethernetFrame *bigEtherFrameB;
-
-volatile uint16_t whichFrame;
-volatile uint16_t whichSampleInPayload;
-
-volatile uint16_t adc_currentSampleNumber;
 
 volatile uint8_t triggerLevel;
 volatile uint8_t triggerDirection;
@@ -98,6 +97,13 @@ void ADC_IRQHandler(void) {
 
 void adc2network(uint8_t adcChannel, uint8_t adcValue) {
 	struct ethernetFrame *aFrame;
+	struct ipPacket *ip;
+	struct udpPacket *udp;
+	static uint8_t whichFrame =0;
+	static uint16_t whichSampleInPayload = 0;
+	static uint16_t adc_currentSampleNumber = 0;
+	uint16_t payloadIdx;
+
 	uint8_t offset;
 	static uint8_t prevTriggerSamples[] = {0,0,0};
 
@@ -127,9 +133,12 @@ void adc2network(uint8_t adcChannel, uint8_t adcValue) {
 		} else {
 			aFrame = bigEtherFrameB;
 		}
+		ip = (struct ipPacket*) &aFrame->payload;
+		udp = (struct udpPacket*) &ip->data;
 
 		// Write a byte to the next position in the frame:
-		aFrame->payload[whichSampleInPayload * 4 + offset] = adcValue;
+		payloadIdx = whichSampleInPayload * 4 + offset;
+		udp->data[payloadIdx] = adcValue;
 
 		if (adcChannel > 4) {
 			whichSampleInPayload++;
@@ -141,13 +150,24 @@ void adc2network(uint8_t adcChannel, uint8_t adcValue) {
 		// TODO: this presumes 4 channels and fixed sizes, etc...
 		if (whichSampleInPayload > 255) {
 			whichSampleInPayload = 0;
+
+			// Ethernet header is 14 bytes.
+			// IP header is 20 bytes.
+			// UDP header is 8 bytes.
+			// Payload size is the payloadIdx+1.
+			ip->totalLength = htons( (20 + 8 + payloadIdx + 1) );
+			udp->length = htons( (8 + payloadIdx + 1) );
+
 			if (whichFrame == 0) {
 				whichFrame = 1;
-				ethernetPleaseSend(aFrame, sizeof(struct ethernetFrame));
 			} else {
 				whichFrame = 0;
-				ethernetPleaseSend(aFrame, sizeof(struct ethernetFrame));
 			}
+
+			ip->headerChecksum = 0;
+			ip->headerChecksum = internetChecksum(ip, 20);
+
+			ethernetPleaseSend(aFrame, (14 + 20 + 8 + payloadIdx + 1));
 		}
 
 		// When we hit the max number of samples, we stop:
@@ -195,10 +215,6 @@ void ADCInit(void) {
 	LPC_SC->PCONP |= bit12; // Power Control PCADC bit
 
 	adc_weAreSending = 1;
-	whichFrame = 0;
-	whichSampleInPayload = 0;
-	adc_currentSampleNumber = 0;
-	//prevTriggerSample = 0;
 
 	// We're going to use four ADC pins: 
 	//	P0.24 == AD0.1 (pin 16 on the mbed)

@@ -22,7 +22,7 @@ void parseIncomingArpPacket(struct arpPacket *pkt) {
 		(pkt->targetIpAddress[2] == myIpAddress[2]) &&
 		(pkt->targetIpAddress[3] == myIpAddress[3]) ) {
 
-		debug("They're looking for me!");
+		debug("ARP: They're looking for me!");
 
 		aFrame = ethernetGetNextTxBuffer(0x0806);
 		replyPkt = (struct arpPacket *) &(aFrame->payload);

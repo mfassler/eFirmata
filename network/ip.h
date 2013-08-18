@@ -21,6 +21,7 @@ struct ipPacket {
 
 
 extern void parseIncomingIpPacket(struct ethernetFrame *, unsigned int);
+extern uint16_t internetChecksum(void *, unsigned int);
 
 
 #endif // __IP_PROTO_

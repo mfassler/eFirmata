@@ -2,7 +2,6 @@
 # -*- coding: UTF-8 -*-
 
 import socket
-import os
 import select
 import time
 
@@ -14,49 +13,17 @@ import matplotlib.pyplot as plt
 import pygame
 
 
-# The Ethernet MAC address of the eFirmata we are talking to:
-#redStripe_addr = "\x00\x02\xf7\xaa\xff\xee"
-deviceEthernetAddress = "\x00\x02\xf7\xaa\xff\xee"
+deviceAddr = ('192.168.11.177', 2114)
 
-
-### firmataControl to send our request
-### firmataFast to receive our data
-
-
-##############################################################
-####
-###  BEGIN: create (and bind to) the socket for receiving data
-##
-fileName = '/tmp/eFirmataInFast.sock'
-
-try:
-    os.remove(fileName)
-except:
-    pass
-
-mySocketRx = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-mySocketRx.bind( fileName )
-
-##
-###  END: create (and bind to) the socket for receiving data
-####
-##############################################################
-
-
-
-# Our socket for sending data (the request for triggered ADC samples):
-#
-fileNameControl = '/tmp/eFirmataOutControl.sock'
-fileSocketControl = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-fileSocketControl.connect(fileNameControl)
-
+mySocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM);
+mySocket.connect(deviceAddr)
 
 
 TRIGGERMODE_OFF = 0
 TRIGGERMODE_NOW = 1
 TRIGGERMODE_RISING = 2
 TRIGGERMODE_FALLING = 3
-TRIGGERMODE_CONTINUOUS = 4
+TRIGGERMODE_CONTINUOUS = 4 # not implemented yet
 
 # Trigger channel should be the ADC channel (1,2,4,5)
 def getTriggeredSample(channel, threshold, triggerModeStr):
@@ -69,7 +36,7 @@ def getTriggeredSample(channel, threshold, triggerModeStr):
         trigMode = TRIGGERMODE_RISING
     elif triggerModeStr == "falling":
         trigMode = TRIGGERMODE_FALLING
-    elif triggerModeStr == "continuous":
+    elif triggerModeStr == "continuous":  #not implemented yet
         trigMode = TRIGGERMODE_CONTINUOUS
     else:
         trigMode = TRIGGERMODE_OFF
@@ -90,22 +57,22 @@ def getTriggeredSample(channel, threshold, triggerModeStr):
 
 
     # Clear out any old data first:
-    mySocketRx.setblocking(0)
+    mySocket.setblocking(0)
     try:
-        nothing = mySocketRx.recv(1522)
+        nothing = mySocket.recv(1522)
     except:
         pass
     else:
         while(nothing):
             try:
-                nothing = mySocketRx.recv(1522)
+                nothing = mySocket.recv(1522)
             except:
                 break
-    mySocketRx.setblocking(1)
+    mySocket.setblocking(1)
     # Incoming data should be empty.  Let us continue...
 
-
-    fileSocketControl.send(deviceEthernetAddress + trigCmd)
+    firmataOverUdpHeader = "eFirmata" + "\x00\x00\x00\x00"
+    mySocket.send(firmataOverUdpHeader + trigCmd)
 
     ## Right now, things are hard-coded for four channels, 256 samples per
     ## ethernet frame (so the data portion that we care about is always 1024 bytes)
@@ -114,17 +81,16 @@ def getTriggeredSample(channel, threshold, triggerModeStr):
     sStart = 0
     sEnd = sStart + 256
 
-    readingList = [mySocketRx]
+    readingList = [mySocket]
 
     while 1:
         inputs, outputs, errors = select.select(readingList, [], [], 1.1)
         if inputs:
             for oneInput in inputs:
-                if oneInput == mySocketRx:
-                    inPacket = mySocketRx.recv(1522)
-                    if len(inPacket) > 20:
-                        # These boundaries, 14:1038, are hard-coded into the eFirmata protocol
-                        stripedData = np.frombuffer(inPacket[14:1038], dtype=np.uint8)
+                if oneInput == mySocket:
+                    inPacket = mySocket.recv(1522)
+                    if len(inPacket) > 1023:
+                        stripedData = np.frombuffer(inPacket[:1024], dtype=np.uint8)
                         chA[sStart:sEnd] = stripedData[::4] #.copy()
                         chB[sStart:sEnd] = stripedData[1::4] #.copy()
                         chC[sStart:sEnd] = stripedData[2::4] #.copy()

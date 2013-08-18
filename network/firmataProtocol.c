@@ -57,44 +57,4 @@ void parseIncomingFirmataPacket(struct incomingFirmataPacket *ptr) {
 
 }
 
-extern volatile uint8_t triggerLevel;
-extern volatile uint8_t triggerDirection;
-extern volatile uint8_t triggerChannel;
-extern volatile uint8_t triggerEnabled;
-extern volatile uint16_t triggerNumSamplesReq;
-extern volatile uint8_t adc_weAreSending;
-
-void parseIncomingFirmataControlPacket(struct incomingFirmataControlPacket *ptr) {
-
-	switch(ptr->triggerMode) {
-		case TRIGGERMODE_OFF:
-			adc_weAreSending = 0;
-			triggerEnabled = 0;
-			break;
-		case TRIGGERMODE_NOW:
-			adc_weAreSending = 1;
-			break;
-		case TRIGGERMODE_RISING:
-			triggerDirection = 1;
-			triggerEnabled = 1;
-			break;
-		case TRIGGERMODE_FALLING:
-			triggerDirection = 0;
-			triggerEnabled = 1;
-			break;
-		//case TRIGGERMODE_CONTINUOUS:
-		//	break;
-		default:
-			adc_weAreSending = 0;
-			triggerEnabled = 0;
-			break;
-	}
-
-	triggerChannel = ptr->triggerChannel;
-	triggerLevel = ptr->triggerLevel;
-
-	triggerNumSamplesReq = 256 * ptr->triggerNumFramesReq; // Number of samples requested, x256
-	triggerEnabled = 1;
-}
-
 

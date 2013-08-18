@@ -28,21 +28,16 @@ void parseFrame(struct ethernetFrame *input, unsigned int inputLen) {
 
 	switch (ethertype) {
 		case 0x0800:  // IP
-			debug("rx IP");
 			parseIncomingIpPacket(input, inputLen);
 			break;
 		case 0x0806:  // ARP
-			debug("rx ARP");
 			parseIncomingArpPacket((struct arpPacket *) &input->payload);
 			break;
 		case 0x181c:  // eFirmata
 			parseIncomingFirmataPacket((struct incomingFirmataPacket *) &input->payload);
 			break;
-		case 0x181b:  // eFirmataControl
-			parseIncomingFirmataControlPacket((struct incomingFirmataControlPacket *) &input->payload);
-			break;
 		default:
-			debugWord("ethertype: ", ethertype);
+			debugWord("unknown ethertype: ", ethertype);
 	}
 }
 
@@ -103,8 +98,10 @@ void ethernetInitTxBuffers(void) {
 	}
 
 	// Special, for eFirmata_fast:
-	bigEtherFrameA->type = htons(EFIRMATA_PROTOCOL_FAST);
-	bigEtherFrameB->type = htons(EFIRMATA_PROTOCOL_FAST);
+	//bigEtherFrameA->type = htons(EFIRMATA_PROTOCOL_FAST);
+	//bigEtherFrameB->type = htons(EFIRMATA_PROTOCOL_FAST);
+	bigEtherFrameA->type = htons(0x0800);
+	bigEtherFrameB->type = htons(0x0800);
 }
 
 

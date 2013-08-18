@@ -13,7 +13,6 @@ struct icmpPacket {
 
 extern void parseIncomingIcmpPacket(struct ethernetFrame *, unsigned int);
 extern void icmp_answerPing(struct ethernetFrame *, unsigned int );
-extern uint16_t internetChecksum(void *, unsigned int);
 
 
 #endif // __ICMP_

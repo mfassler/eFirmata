@@ -18,6 +18,7 @@ OBJECTS += network/arp.o
 OBJECTS += network/ip.o
 OBJECTS += network/icmp.o
 OBJECTS += network/udp.o
+OBJECTS += network/udpServices/oscope.o
 OBJECTS += ethernetPHY.o
 OBJECTS += emac.o
 OBJECTS += ssp.o

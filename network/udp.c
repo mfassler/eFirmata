@@ -3,8 +3,13 @@
 
 #include "network/ip.h"
 #include "network/udp.h"
+#include "network/udpServices/oscope.h"
 #include "network/endian.h"
 #include "emac.h"
+
+// For incoming firmata-over-UDP packets, the first 8 bytes MUST
+// always be "eFirmata":
+const char FIRMATA_ID_TOKEN[8] = _FIRMATA_ID_TOKEN;
 
 
 void parseIncomingUdpPacket(struct ethernetFrame *frame, unsigned int length) {
@@ -12,8 +17,6 @@ void parseIncomingUdpPacket(struct ethernetFrame *frame, unsigned int length) {
 	struct udpPacket *udp;
 	unsigned short dataLen, udpDataLen;
 	uint16_t myPort;
-
-	debug("This is UDP.");
 
 	ip = (struct ipPacket *) &frame->payload;
 	udp = (struct udpPacket *) &ip->data;
@@ -31,10 +34,13 @@ void parseIncomingUdpPacket(struct ethernetFrame *frame, unsigned int length) {
 
 	switch (myPort) {
 		case 2112:
-			udpToDebug(&udp->data, dataLen);
+			udpToDebug(udp->data, dataLen);
 			break;
 		case 2113:
 			udpEcho(frame, length);
+			break;
+		case 2114:
+			incomingOscopeOverUdp(frame, length);
 			break;
 		default:
 			debugWord("UDP Packet, port: ", myPort);
