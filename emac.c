@@ -192,23 +192,24 @@ void ENET_IRQHandler (void) {
 
 
 void ethernetPleaseSend(void * bufAddr, unsigned short frameSize) {
+	// For DMA, we must "Produce" buffers.  The eth-DMA controller will
+	// "Consume" those buffers
 	unsigned int idx;
 
 	// What is the next buffer index?
-	idx = LPC_EMAC->TxProduceIndex + 1;
-	if (idx == NUM_TX_FRAG) {
-		idx = 0;
-	}
+	idx = LPC_EMAC->TxProduceIndex;
 
-	// Point the way to the buffer:
-	TX_DESC_CTRL(idx)   = 0;
-	TX_STAT_INFO(idx)   = 0;
+	TX_STAT_INFO(idx) = 0;
 
 	// The literal memory address is fed to the EMAC-DMA controller:
 	TX_DESC_PACKET(idx) = (unsigned int) bufAddr;
 	TX_DESC_CTRL(idx) = (frameSize - 1) | TCTRL_LAST;
 
 	// EMAC, you have work do do:
+	idx++;
+	if (idx == NUM_TX_FRAG) {
+		idx = 0;
+	}
 	LPC_EMAC->TxProduceIndex = idx;
 }
 
