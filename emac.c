@@ -1,19 +1,24 @@
-/******************************************************************
- *****														*****
- *****  Name: cs8900.c										*****
- *****  Ver.: 1.0											 *****
- *****  Date: 07/05/2001									  *****
- *****  Auth: Andreas Dannenberg							  *****
- *****		HTWK Leipzig									*****
- *****		university of applied sciences				  *****
- *****		Germany										 *****
- *****  Func: ethernet packet-driver for use with LAN-		*****
- *****		controller CS8900 from Crystal/Cirrus Logic	 *****
- *****														*****
- *****  Keil: Module modified for use with Philips			*****
- *****		LPC17xx EMAC Ethernet controller				*****
- *****														*****
- ******************************************************************/
+/**
+ *   Name: cs8900.c
+ *     Ver.: 1.0
+ *     Date: 07/05/2001
+ *     Auth: Andreas Dannenberg
+ *     HTWK Leipzig
+ *     university of applied sciences
+ *     Germany
+ *  Func: ethernet packet-driver for use with LAN-
+ *  controller CS8900 from Crystal/Cirrus Logic
+ *
+ *  Keil: Module modified for use with Philips
+ *  LPC17xx EMAC Ethernet controller
+ *
+ */
+
+/**
+ * Copyright 2012, 2013 Mark Fassler
+ *  Licensed under the GPLv3
+ *
+ */
 
 
 // TODO:  proper CRCs.  See:  http://www.edaboard.com/thread120700.html

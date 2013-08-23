@@ -93,13 +93,9 @@ void ethernetInitTxBuffers(void) {
 		for (j=0; j < sizeof(((struct ethernetFrame *)0)->payload); j++) {
 			oneFrame->payload[j] = 0;
 		}
-
-		oneFrame->fcs = 0;
 	}
 
 	// Special, for eFirmata_fast:
-	//bigEtherFrameA->type = htons(EFIRMATA_PROTOCOL_FAST);
-	//bigEtherFrameB->type = htons(EFIRMATA_PROTOCOL_FAST);
 	bigEtherFrameA->type = htons(0x0800);
 	bigEtherFrameB->type = htons(0x0800);
 }
