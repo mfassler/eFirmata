@@ -18,8 +18,6 @@ void parseIncomingIcmpPacket(struct ethernetFrame *frame, unsigned int length) {
 	ip = (struct ipPacket *) &frame->payload;
 	icmp = (struct icmpPacket *) &ip->data;
 
-	debug("parse ICMP");
-
 	switch (icmp->type) {
 		case 8: // Echo request
 			icmp_answerPing(frame, length);

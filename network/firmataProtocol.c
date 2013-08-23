@@ -1,5 +1,6 @@
 
 #include <LPC17xx.h>
+#include "bitTypes.h"
 #include "debug.h"
 #include "pwm.h"
 
@@ -21,15 +22,6 @@ void parseIncomingFirmataPacket(struct incomingFirmataPacket *ptr) {
 	// Set the 8-bit output (on/off)
 	LPC_GPIO2->FIOPIN = ptr->inputByte;
 	debugByte("inputByte: ", ptr->inputByte);
-
-	// Set the PWM outputs (6 channels)
-	LPC_PWM1->MR1 = ptr->pwm1;
-	LPC_PWM1->MR2 = ptr->pwm2;
-	LPC_PWM1->MR3 = ptr->pwm3;
-	LPC_PWM1->MR4 = ptr->pwm4;
-	LPC_PWM1->MR5 = ptr->pwm5;
-	LPC_PWM1->MR6 = ptr->pwm6;
-	LPC_PWM1->LER = LER0_EN | LER1_EN | LER2_EN | LER3_EN | LER4_EN | LER5_EN | LER6_EN;
 
 
 	// SPI:  first byte is numbytes (15 max, 0 means "do nothing")

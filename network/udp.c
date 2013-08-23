@@ -7,6 +7,9 @@
 #include "network/endian.h"
 #include "emac.h"
 
+#include "network/udpServices/firmataOut.h"
+
+
 // For incoming firmata-over-UDP packets, the first 8 bytes MUST
 // always be "eFirmata":
 const char FIRMATA_ID_TOKEN[8] = _FIRMATA_ID_TOKEN;
@@ -41,6 +44,9 @@ void parseIncomingUdpPacket(struct ethernetFrame *frame, unsigned int length) {
 			break;
 		case 2114:
 			incomingOscopeOverUdp(frame, length);
+			break;
+		case 2115:
+			udpPWM(frame, length);
 			break;
 		default:
 			debugWord("UDP Packet, port: ", myPort);

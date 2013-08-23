@@ -16,7 +16,7 @@ struct ipPacket {
 	uint16_t headerChecksum;
 	uint32_t srcIpAddr;
 	uint32_t destIpAddr;
-	uint8_t data;
+	uint8_t data[];
 };
 
 
