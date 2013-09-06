@@ -1,6 +1,6 @@
 
-#ifndef __OSCOPE_OVER_UDP_
-#define __OSCOPE_OVER_UDP_
+#ifndef __OSCOPE_OVER_UDP_H_
+#define __OSCOPE_OVER_UDP_H_
 
 
 #define TRIGGERMODE_OFF 0
@@ -17,11 +17,12 @@ struct scopeCmdOverUdp {
 	uint8_t triggerMode;
 	uint8_t triggerChannel;
 	uint8_t triggerLevel;
-	uint8_t triggerNumFramesReq;
+	uint8_t nothing; // stay on 32-bit boundaries
+	uint32_t triggerNumSamplesReq;
 };
 
 extern void incomingOscopeOverUdp(struct ethernetFrame *, unsigned int);
 extern void prepOutgoingFastBuffers(struct ethernetFrame *, unsigned int);
 
-#endif // __OSCOPE_OVER_UDP_
+#endif // __OSCOPE_OVER_UDP_H_
 

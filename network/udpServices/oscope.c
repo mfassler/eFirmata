@@ -5,6 +5,7 @@
 #include "network/ip.h"
 #include "network/udp.h"
 #include "network/udpServices/oscope.h"
+#include "network/endian.h"
 
 #include "adc.h"
 
@@ -44,7 +45,7 @@ void incomingOscopeOverUdp(struct ethernetFrame *frame, unsigned int length) {
 	triggerChannel = cmd->triggerChannel;
 	triggerLevel = cmd->triggerLevel;
 
-	triggerNumSamplesReq = 256 * cmd->triggerNumFramesReq; // Number of samples requested, x256
+	triggerNumSamplesReq = ntohl(cmd->triggerNumSamplesReq); // Number of samples requested
 
 	switch(cmd->triggerMode) {
 		case TRIGGERMODE_OFF:

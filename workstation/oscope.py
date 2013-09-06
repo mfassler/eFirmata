@@ -6,6 +6,7 @@ import select
 import time
 import signal
 import sys
+import struct
 
 import numpy as np
 
@@ -50,19 +51,18 @@ def getTriggeredSample(channel, threshold, triggerModeStr):
     else:
         trigMode = TRIGGERMODE_OFF
 
-    # a "frame" is 256 samples.  So number of samples we want is number of frames*256
-    trigNumFramesReq = 2  #we want 512 samples
 
-    sMax = trigNumFramesReq * 256 # maximum number of samples
+    trigNumSamplesReq = 512
 
     numChannels = 4
-    chA = np.zeros(sMax)
-    chB = np.zeros(sMax)
-    chC = np.zeros(sMax)
-    chD = np.zeros(sMax)
+    chA = np.zeros(trigNumSamplesReq)
+    chB = np.zeros(trigNumSamplesReq)
+    chC = np.zeros(trigNumSamplesReq)
+    chD = np.zeros(trigNumSamplesReq)
 
-    # Packet structure is: Mode, Channel, Threshold, NumFramesRequested
-    trigCmd = chr(trigMode) + chr(channel & 0xff) + chr(threshold & 0xff) + chr(trigNumFramesReq)
+    # Packet structure is: Mode, Channel, Threshold, (dummy byte), NumberOfSamplesRequested
+    trigCmd = chr(trigMode) + chr(channel & 0xff) + chr(threshold & 0xff) + chr(0)
+    trigCmd += struct.pack('!L', trigNumSamplesReq)
 
 
     # Clear out any old data first:
@@ -119,7 +119,7 @@ def getTriggeredSample(channel, threshold, triggerModeStr):
         else:
             print "timeout waiting for packet"
             break
-        if sEnd > sMax:
+        if sEnd > trigNumSamplesReq:
             break
 
     return chA, chB, chC, chD
