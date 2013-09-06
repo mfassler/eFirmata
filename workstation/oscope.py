@@ -4,6 +4,8 @@
 import socket
 import select
 import time
+import signal
+import sys
 
 import numpy as np
 
@@ -17,6 +19,13 @@ deviceAddr = ('192.168.11.177', 2114)
 
 mySocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM);
 mySocket.connect(deviceAddr)
+
+
+def signal_handler(signal, frame):
+    print " Shutting down..."
+    sys.exit()
+
+signal.signal(signal.SIGINT, signal_handler)
 
 
 TRIGGERMODE_OFF = 0
