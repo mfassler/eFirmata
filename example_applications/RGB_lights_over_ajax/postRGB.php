@@ -38,11 +38,12 @@ if ($fp) {
 		exit();
 	}
 
-	$pwmMask = "\x00\x00\x00\x07";  // we will set the first 3 PWMs
-	$pwmValues0_2 = chr($red) . chr($green) . chr($blue);
-	$pwmValues3_31 = str_repeat("\x00", 29);
+	$pwmMask = "\x00\x00\x00\x0e";  // we will set PWMs 1-3
+	$pwmValues0 = "\x00";
+	$pwmValues1_3 = chr($red) . chr($green) . chr($blue);
+	$pwmValues4_31 = str_repeat("\x00", 28);
 
-	$pwmCmd = $pwmMask . $pwmValues0_2 . $pwmValues3_31;
+	$pwmCmd = $pwmMask . $pwmValues0 . $pwmValues1_3 . $pwmValues3_31;
 
 	$numBytesWritten = fwrite($fp, $firmataOverUdpHeader . $pwmCmd);
 

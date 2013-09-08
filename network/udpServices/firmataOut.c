@@ -46,12 +46,14 @@ void udpPWM(struct ethernetFrame *frame, unsigned int length) {
 
 	// TODO:  We are ignoring the bitmask for now.
 
-	LPC_PWM1->MR1 = cmd->batch[0].values[0];
-	LPC_PWM1->MR2 = cmd->batch[0].values[1];
-	LPC_PWM1->MR3 = cmd->batch[0].values[2];
-	LPC_PWM1->MR4 = cmd->batch[0].values[3];
-	LPC_PWM1->MR5 = cmd->batch[0].values[4];
-	LPC_PWM1->MR6 = cmd->batch[0].values[5];
+	// On the LPC1768/9, the PWM #0 is not available as an output,
+	// so we start counting from 1, right along with out microcontroller
+	LPC_PWM1->MR1 = cmd->batch[0].values[1];
+	LPC_PWM1->MR2 = cmd->batch[0].values[2];
+	LPC_PWM1->MR3 = cmd->batch[0].values[3];
+	LPC_PWM1->MR4 = cmd->batch[0].values[4];
+	LPC_PWM1->MR5 = cmd->batch[0].values[5];
+	LPC_PWM1->MR6 = cmd->batch[0].values[6];
 	LPC_PWM1->LER = bit1 | bit2 | bit3 | bit4 | bit5 | bit6;
 }
 
