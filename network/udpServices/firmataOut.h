@@ -8,7 +8,7 @@
 
 // 8bit PWMs are grouped into batches of 32 (so that the mask will align onto a 32bit boundary)
 struct pwmBatch {
-	uint8_t mask[4]; // Bitmask.  If it's a 1, then we set the PWM to the new value.  0==ignore.
+	uint32_t mask; // Bitmask.  If it's a 1, then we set the PWM to the new value.  0==ignore.
 	uint8_t values[32];
 };
 

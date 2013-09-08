@@ -4,6 +4,7 @@
 
 #include "debug.h"
 
+#include "network/endian.h"
 #include "network/ethernet.h"
 #include "network/ip.h"
 #include "network/udp.h"
@@ -15,6 +16,8 @@
 void udpPWM(struct ethernetFrame *frame, unsigned int length) {
 	const char FIRMATA_ID_SUBTOKEN[3] = "PWM"; // This is PWM
 	const uint8_t FIRMATA_PWM_VERSION = 0;
+
+	uint32_t pwmMask;
 
 	struct ipPacket *ip;
 	struct udpPacket *udp;
@@ -44,17 +47,29 @@ void udpPWM(struct ethernetFrame *frame, unsigned int length) {
 		return;
 	}
 
-	// TODO:  We are ignoring the bitmask for now.
+	pwmMask = ntohl(cmd->batch[0].mask);
 
 	// On the LPC1768/9, the PWM #0 is not available as an output,
-	// so we start counting from 1, right along with out microcontroller
-	LPC_PWM1->MR1 = cmd->batch[0].values[1];
-	LPC_PWM1->MR2 = cmd->batch[0].values[2];
-	LPC_PWM1->MR3 = cmd->batch[0].values[3];
-	LPC_PWM1->MR4 = cmd->batch[0].values[4];
-	LPC_PWM1->MR5 = cmd->batch[0].values[5];
-	LPC_PWM1->MR6 = cmd->batch[0].values[6];
-	LPC_PWM1->LER = bit1 | bit2 | bit3 | bit4 | bit5 | bit6;
+	// so we start counting from 1, right along with our microcontroller
+	if (pwmMask & bit1)
+		LPC_PWM1->MR1 = cmd->batch[0].values[1];
+
+	if (pwmMask & bit2)
+		LPC_PWM1->MR2 = cmd->batch[0].values[2];
+
+	if (pwmMask & bit3)
+		LPC_PWM1->MR3 = cmd->batch[0].values[3];
+
+	if (pwmMask & bit4)
+		LPC_PWM1->MR4 = cmd->batch[0].values[4];
+
+	if (pwmMask & bit5)
+		LPC_PWM1->MR5 = cmd->batch[0].values[5];
+
+	if (pwmMask & bit6)
+		LPC_PWM1->MR6 = cmd->batch[0].values[6];
+
+	LPC_PWM1->LER = pwmMask & 0x7e;  // Use our mask to set the output latches
 }
 
 

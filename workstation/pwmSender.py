@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 
 import socket
+import struct
 
 deviceAddr = ('192.168.11.177', 2115)
 
@@ -10,18 +11,22 @@ mySocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM);
 mySocket.connect(deviceAddr)
 
 
-def setPWMs(pwmValues):
+def setPWMs(reqPwmValues):
 
     # Packet structure is: 
     #  32 bit mask (1 means we want to set the value, 0 means leave it untouched)
     #  uint8_t values[32];  <-- 32 octets, one value for each PWM
 
-    pwmMask = '\x00\x00\x00\x3f' # we will set the first 6 PWMs
-    pwmValues0_5 = ''.join(map(chr, pwmValues))
-    pwmValues6_31 = '\x00' * 26
+    pwmMask = 0 # 32 bits
+    pwmValues = [0] * 32 # one byte per channel
 
-    pwmCmd = pwmMask + pwmValues0_5 + pwmValues6_31
+    for i, oneValue in enumerate(reqPwmValues):
+        if type(oneValue) == int and oneValue >= 0 and oneValue <= 255:
+            pwmValues[i] = oneValue
+            pwmMask |= (1 << i)
 
+    # convert to a string:
+    pwmCmd = struct.pack('!L', pwmMask) + ''.join(map(chr, pwmValues))
 
     # Clear out any old data first:
     mySocket.setblocking(0)
