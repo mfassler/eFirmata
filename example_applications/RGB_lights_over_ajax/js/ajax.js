@@ -30,7 +30,7 @@ function sendRGBtoServer(red, green, blue) {
 
 	// We only update 10 times per second, max:
 	var now = +Date.now();
-	if ((window.lastRGBSend + now) < 100) {
+	if ((now - window.lastRGBSend) < 100) {
 		return;
 	}
 	window.lastRGBSend = now;
