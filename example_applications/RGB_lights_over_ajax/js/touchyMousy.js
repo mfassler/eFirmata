@@ -59,13 +59,13 @@ if (isTouchDevice()) { // This is a touch device (e.g., a smartphone)
 		if (evt.button == 0) {
 			window.trackColorWheel = true;
 			window.trackLightness = false;
-			updateColorWheel(evt.x, evt.y);
+			updateColorWheel(evt.clientX, evt.clientY);
 		}
 	};
 
 	colorElem.onmousemove = function (evt) {
 		if (window.trackColorWheel) {
-			updateColorWheel(evt.x, evt.y);
+			updateColorWheel(evt.clientX, evt.clientY);
 		}
 	};
 
@@ -73,13 +73,13 @@ if (isTouchDevice()) { // This is a touch device (e.g., a smartphone)
 		if (evt.button == 0) {
 			window.trackLightness = true;
 			window.trackColorWheel = false;
-			updateLightness(evt.x, evt.y);
+			updateLightness(evt.clientX, evt.clientY);
 		}
 	};
 
 	lightElem.onmousemove = function (evt) {
 		if (window.trackLightness) {
-			updateLightness(evt.x, evt.y);
+			updateLightness(evt.clientX, evt.clientY);
 		}
 	};
 
