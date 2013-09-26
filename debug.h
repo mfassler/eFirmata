@@ -9,5 +9,5 @@ void debug(char*);
 void debugByte(char*, uint8_t);
 void debugWord(char*, uint16_t);
 void debugLong(char*, uint32_t);
-
+void debugMacAddress(char*, char*);
 

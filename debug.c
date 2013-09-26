@@ -120,3 +120,21 @@ void debugLong(char* msg, uint32_t value) {
 	UART2_sendString("\r\n", 2);
 }
 
+
+void debugMacAddress(char* msg, char* macAddress) {
+	int i;
+	char buf[2];
+	int bufLen;
+
+	UART2_sendString(msg, 200);
+
+	for (i=0; i<6; i++) {
+		bufLen = formatHex(buf, macAddress[i]);
+		UART2_sendString(buf, bufLen);
+		if (i != 5) {
+			UART2_sendString(":", 1);
+		}
+	}
+	UART2_sendString("\r\n", 2);
+}
+

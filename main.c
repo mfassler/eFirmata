@@ -27,7 +27,7 @@
 
 // would love for this to be generated from the internal serial number or something... 
 #include "network/MAC_ADDRESSES.h"
-const char myMacAddress[6] = SELF_ADDR;
+volatile char myMacAddress[6];
 volatile char myIpAddress[4] = SELF_IP_ADDR;
 
 
@@ -100,6 +100,47 @@ void SysTick_Handler (void) {
 }
 
 
+
+
+#define IAP_LOCATION 0x1fff1ff1;
+typedef void (*IAP) (unsigned int [], unsigned int[]);
+IAP iap_entry = (IAP) IAP_LOCATION;
+
+void setMacAddress(void) {
+	unsigned int command[5];
+	unsigned int result[5];
+
+	unsigned int tmp;
+
+	debug("Getting device serial number...");
+
+	// Read device serial number:
+	command[0] = 58; // defined on page ~634
+	iap_entry(command, result);
+
+	debugLong("1: ", result[1]);
+	debugLong("2: ", result[2]);
+	debugLong("3: ", result[3]);
+	debugLong("4: ", result[4]);
+
+	// ARM is 00:02:f7
+	// a local-only address has the bit 02:00:00 set
+	// so we'll use 02:02:f7
+	myMacAddress[0] = 0x02;
+	myMacAddress[1] = 0x02;
+	myMacAddress[2] = 0xf7;
+
+	// "hash" the serial number into our MAC address:
+	tmp = result[1] ^ result[2] ^ result[3] ^ result[4];
+
+	myMacAddress[3] = (tmp & 0xff0000) >> 16;
+	myMacAddress[4] = (tmp & 0xff00) >> 8;
+	myMacAddress[5] = tmp & 0xff;
+
+	debugMacAddress("My MAC address: ", (char *) myMacAddress);
+}
+
+
 int main() {
 	// Enable our blinky LEDs:
 	LPC_GPIO1->FIODIR = bit18 | bit20 | bit21 | bit23;
@@ -109,6 +150,8 @@ int main() {
 	// Initialize serial port for debug messages:
 	UARTInit(2, 38400);
 	debug("...init done.");
+
+	setMacAddress();
 
 	LPC_GPIO1->FIOSET = bit20;  // Turn on blinky LED #2
 
@@ -153,6 +196,7 @@ int main() {
 	// Start the 100 Hz timer:
 	debugLong("SystemCoreClock: ", SystemCoreClock);
 	SysTick_Config (SystemCoreClock / 100);
+
 
 	while (1) {
 		delayMs(0, 120);

@@ -78,7 +78,7 @@ void ethernetInitTxBuffers(void) {
 	struct ethernetFrame *oneFrame;
 
 	char myDestAddr[6] = DEST_ADDR;
-	char mySrcAddr[6] = SELF_ADDR;
+	extern volatile char myMacAddress[];
 
 	debug("init outgoing enet packets");
 
@@ -87,7 +87,7 @@ void ethernetInitTxBuffers(void) {
 
 		for (j=0; j<6; j++) {
 			oneFrame->dest[j] = myDestAddr[j];
-			oneFrame->src[j] = mySrcAddr[j];
+			oneFrame->src[j] = myMacAddress[j];
 		}
 
 		for (j=0; j < sizeof(((struct ethernetFrame *)0)->payload); j++) {
