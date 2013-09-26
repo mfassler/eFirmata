@@ -25,7 +25,6 @@
 
 #include "network/firmataProtocol.h"
 
-// would love for this to be generated from the internal serial number or something... 
 #include "network/MAC_ADDRESSES.h"
 volatile char myMacAddress[6];
 volatile char myIpAddress[4] = SELF_IP_ADDR;
