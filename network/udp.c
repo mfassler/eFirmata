@@ -3,11 +3,11 @@
 
 #include "network/ip.h"
 #include "network/udp.h"
-#include "network/udpServices/oscope.h"
 #include "network/endian.h"
 #include "emac.h"
 
-#include "network/udpServices/firmataOut.h"
+#include "network/udpServices/oscope.h"
+#include "network/udpServices/firmataPWM.h"
 
 
 // For incoming firmata-over-UDP packets, the first 8 bytes MUST

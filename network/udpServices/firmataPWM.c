@@ -8,7 +8,8 @@
 #include "network/ethernet.h"
 #include "network/ip.h"
 #include "network/udp.h"
-#include "network/udpServices/firmataOut.h"
+
+#include "network/udpServices/firmataPWM.h"
 
 //#include "pwm.h"
 
