@@ -80,7 +80,7 @@ void UART2_sendString(char *buf, uint8_t length) {
 void debug(char *msg) {
 
 	UART2_sendString(msg, 200);
-	UART2_sendString("\n\r", 2);
+	UART2_sendString("\r\n", 2);
 }
 
 
@@ -93,7 +93,7 @@ void debugByte(char* msg, uint8_t value) {
 	UART2_sendString("0x", 2);
 	bufLen = formatHex(buf, value);
 	UART2_sendString(buf, bufLen);
-	UART2_sendString("\n\r", 2);
+	UART2_sendString("\r\n", 2);
 }
 
 
@@ -105,7 +105,7 @@ void debugWord(char* msg, uint16_t value) {
 	UART2_sendString("0x", 2);
 	bufLen = formatHexWord(buf, value);
 	UART2_sendString(buf, bufLen);
-	UART2_sendString("\n\r", 2);
+	UART2_sendString("\r\n", 2);
 }
 
 
@@ -117,6 +117,6 @@ void debugLong(char* msg, uint32_t value) {
 	UART2_sendString("0x", 2);
 	bufLen = formatHexLong(buf, value);
 	UART2_sendString(buf, bufLen);
-	UART2_sendString("\n\r", 2);
+	UART2_sendString("\r\n", 2);
 }
 
