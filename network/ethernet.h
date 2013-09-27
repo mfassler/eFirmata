@@ -20,6 +20,7 @@ struct ethernetFrame {
 extern void parseFrame(struct ethernetFrame*, unsigned int);
 extern void ethernetInitTxBuffers(void);
 extern struct ethernetFrame *ethernetGetNextTxBuffer(uint16_t);
+extern void setMacAddress(void);
 
 
 #endif  // __ETHERNET_PROTOCOL_H_

@@ -1,13 +1,14 @@
 
 #include "debug.h"
 
+#include "emac.h"
 #include "network/ip.h"
 #include "network/udp.h"
 #include "network/endian.h"
-#include "emac.h"
 
 #include "network/udpServices/oscope.h"
 #include "network/udpServices/firmataPWM.h"
+//#include "network/udpServices/firmataSPI.h"
 
 
 // For incoming firmata-over-UDP packets, the first 8 bytes MUST
@@ -48,6 +49,9 @@ void parseIncomingUdpPacket(struct ethernetFrame *frame, unsigned int length) {
 		case 2115:
 			udpPWM(frame, length);
 			break;
+		//case 2116:
+		//	udpSPI(frame, length);
+		//	break;
 		default:
 			debugWord("UDP Packet, port: ", myPort);
 			break;
@@ -99,6 +103,9 @@ void udpToDebug(char * data, unsigned short length) {
 	unsigned short i;
 	char buffer[100];
 
+	// Get the data out of the Ethernet RX buffer asap:
+	// (serial port is much, much slower, and I don't have any locking
+	//  on incoming ethernet DMA)
 	for (i = 0; i<length; i++) {
 		buffer[i] = data[i];
 		if (i > 98) {

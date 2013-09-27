@@ -8,7 +8,7 @@
 #include "network/arp.h"
 
 extern char myMacAddress[];
-extern volatile char myIpAddress[];
+extern volatile char myIpAddress_char[];
 
 void parseIncomingArpPacket(struct arpPacket *pkt) {
 
@@ -17,10 +17,10 @@ void parseIncomingArpPacket(struct arpPacket *pkt) {
 
 	// oper==1 is a "request", but we have to flip to network-endian
 	if ((pkt->oper == 0x0100) &&
-		(pkt->targetIpAddress[0] == myIpAddress[0]) &&
-		(pkt->targetIpAddress[1] == myIpAddress[1]) &&
-		(pkt->targetIpAddress[2] == myIpAddress[2]) &&
-		(pkt->targetIpAddress[3] == myIpAddress[3]) ) {
+		(pkt->targetIpAddress[0] == myIpAddress_char[0]) &&
+		(pkt->targetIpAddress[1] == myIpAddress_char[1]) &&
+		(pkt->targetIpAddress[2] == myIpAddress_char[2]) &&
+		(pkt->targetIpAddress[3] == myIpAddress_char[3]) ) {
 
 		debug("ARP: They're looking for me!");
 
@@ -48,10 +48,10 @@ void parseIncomingArpPacket(struct arpPacket *pkt) {
 		replyPkt->senderMacAddress[3] = myMacAddress[3];
 		replyPkt->senderMacAddress[4] = myMacAddress[4];
 		replyPkt->senderMacAddress[5] = myMacAddress[5];
-		replyPkt->senderIpAddress[0] = myIpAddress[0];
-		replyPkt->senderIpAddress[1] = myIpAddress[1];
-		replyPkt->senderIpAddress[2] = myIpAddress[2];
-		replyPkt->senderIpAddress[3] = myIpAddress[3];
+		replyPkt->senderIpAddress[0] = myIpAddress_char[0];
+		replyPkt->senderIpAddress[1] = myIpAddress_char[1];
+		replyPkt->senderIpAddress[2] = myIpAddress_char[2];
+		replyPkt->senderIpAddress[3] = myIpAddress_char[3];
 
 		// The other guy:
 		replyPkt->targetMacAddress[0] = pkt->senderMacAddress[0];

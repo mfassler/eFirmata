@@ -14,133 +14,29 @@
 
 #include "emac.h"
 #include "network/ethernet.h"
+#include "network/ip.h"
+#include "network/DEFAULT_IP_ADDRESS.h"
 
-#include "ssp.h"
+//#include "ssp.h"
 #include "adc.h"
 #include "dac.h"
 #include "pwm.h"
-//#include "gpioStuff.h"
-//#include "modules/quadrature.h"
-//#include "modules/stepperControl_dSpin.h"
-
-#include "network/firmataProtocol.h"
-
-#include "network/MAC_ADDRESSES.h"
-volatile char myMacAddress[6];
-volatile char myIpAddress[4] = SELF_IP_ADDR;
-
 
 volatile uint32_t current_time;
 
-extern volatile uint16_t stepperPosition;
-extern volatile uint16_t targetPosition;
-
-void sendOneSensorPacket (void) {
-	// Once every 10 ms we send sensor data to the PC.
-
-	// We have two DMA buffers.  We will alternate between those two.
-	// (ie, we prepare a packet, then send it, then next time we will
-	// prepare the other packet.  So hopefully we wont collide with the
-	// EthernetPleaseSend process...)
-	struct ethernetFrame *mySensorFrame;
-	struct sensorPacket *mySensorPacket;
-
-	// eFirmata-over-ethernet protocol is 0x181c:
-	mySensorFrame = ethernetGetNextTxBuffer(0x181c);
-	mySensorPacket = (struct sensorPacket *) &(mySensorFrame->payload);
-	mySensorPacket->subProt[0] = ':';
-	mySensorPacket->subProt[1] = '-';
-	mySensorPacket->subProt[2] = ')';
-	mySensorPacket->subProt[3] = 0x01;
-
-	// Digital inputs for the eFirmata protocol: P1.24 through P1.31
-	mySensorPacket->inputByte = (LPC_GPIO1->FIOPIN >> 24) & 0xff;
-
-	//mySensorPacket->stepperPosition = stepperPosition;
-	//mySensorPacket->targetPosition = targetPosition;
-
-
-	if (LPC_GPIO0->FIOPIN & bit0) {
-		mySensorPacket->busyBit = 1;
-	} else {
-		mySensorPacket->busyBit = 0;
-	}
-
-	// Check for data from SSP0:
-/*
-	i=0;
-	while (LPC_SSP0->SR & SSPSR_RNE) {  // RNE = Receive FIFO Not Empty
-		// Counting starts at 1
-		i++;
-		mySensorPacket->happyMessage[i] = LPC_SSP0->DR;
-		if (i > 7) {
-			break;
-		}
-	}
-	mySensorPacket->happyMessage[0] = i;
-*/
-	//mySensorPacket->happyMessage[0] = SSP0_readFromFIFO(&mySensorPacket->happyMessage[1], 8);
-
-
-	//mySensorPacket->quadPositionA = quadrature_getPosition(0);
-
-	ethernetPleaseSend(mySensorFrame, sizeof(struct sensorPacket));
-}
-
 
 void SysTick_Handler (void) {
-	// Things to do 100 times per second!
+	// Things to do 100 times per second
+
 	current_time++;
-	sendOneSensorPacket();
-
-	// This is only used for the reflex board
-	// This function will check itself before running twice, etc:
-	//stepperControl_seekToAbsolutePosition();
 }
 
 
+int main(void) {
 
+	// Default IP address, from an include or Makefile:
+	char myIpAddress[4] = SELF_IP_ADDR;
 
-#define IAP_LOCATION 0x1fff1ff1;
-typedef void (*IAP) (unsigned int [], unsigned int[]);
-IAP iap_entry = (IAP) IAP_LOCATION;
-
-void setMacAddress(void) {
-	unsigned int command[5];
-	unsigned int result[5];
-
-	unsigned int tmp;
-
-	debug("Getting device serial number...");
-
-	// Read device serial number:
-	command[0] = 58; // defined on page ~634
-	iap_entry(command, result);
-
-	debugLong("1: ", result[1]);
-	debugLong("2: ", result[2]);
-	debugLong("3: ", result[3]);
-	debugLong("4: ", result[4]);
-
-	// ARM is 00:02:f7
-	// a local-only address has the bit 02:00:00 set
-	// so we'll use 02:02:f7
-	myMacAddress[0] = 0x02;
-	myMacAddress[1] = 0x02;
-	myMacAddress[2] = 0xf7;
-
-	// "hash" the serial number into our MAC address:
-	tmp = result[1] ^ result[2] ^ result[3] ^ result[4];
-
-	myMacAddress[3] = (tmp & 0xff0000) >> 16;
-	myMacAddress[4] = (tmp & 0xff00) >> 8;
-	myMacAddress[5] = tmp & 0xff;
-
-	debugMacAddress("My MAC address: ", (char *) myMacAddress);
-}
-
-
-int main() {
 	// Enable our blinky LEDs:
 	LPC_GPIO1->FIODIR = bit18 | bit20 | bit21 | bit23;
 
@@ -148,9 +44,11 @@ int main() {
 
 	// Initialize serial port for debug messages:
 	UARTInit(2, 38400);
-	debug("...init done.");
+	debug("\r\n...init done.");
 
 	setMacAddress();
+	setIpAddress(myIpAddress);
+	ethernetInitTxBuffers();  // This must occur before ADC init
 
 	LPC_GPIO1->FIOSET = bit20;  // Turn on blinky LED #2
 
@@ -160,10 +58,6 @@ int main() {
 
 	LPC_GPIO1->FIOSET = bit21;  // Turn on blinky LED #3
 	debug("Done with Init_EMAC().");
-
-	// Set the src_address, dest_address, etc:
-	ethernetInitTxBuffers();  // This must occur before ADC init
-
 
 	LPC_GPIO1->FIOSET = bit23;  // Turn on blinky LED #4
 

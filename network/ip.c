@@ -4,9 +4,14 @@
 #include "bitTypes.h"
 #include "debug.h"
 
+#include "network/endian.h"
 #include "network/ip.h"
 #include "network/icmp.h"
 #include "network/udp.h"
+
+volatile char myIpAddress_char[4];
+volatile uint32_t myIpAddress_longBE; // 32-bit big-endian, for quicker operations
+
 
 
 void parseIncomingIpPacket(struct ethernetFrame *frame, unsigned int length) {
@@ -57,4 +62,21 @@ uint16_t internetChecksum(void * addr, unsigned int count) {
 	return (uint16_t) ~sum;
 }
 
+
+void setIpAddress(char ipAddr[]) {
+	unsigned int i;
+	uint32_t tmpIpAddr;
+
+	for (i=0; i<4; i++) {
+		myIpAddress_char[i] = ipAddr[i];
+	}
+
+	tmpIpAddr = ipAddr[0] << 24;
+	tmpIpAddr |= ipAddr[1] << 16;
+	tmpIpAddr |= ipAddr[2] << 8;
+	tmpIpAddr |= ipAddr[3];
+
+	myIpAddress_longBE = htonl(tmpIpAddr);
+	debugLong("IP, BE: ", myIpAddress_longBE);
+}
 

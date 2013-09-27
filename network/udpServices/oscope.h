@@ -3,11 +3,13 @@
 #define __OSCOPE_OVER_UDP_H_
 
 
+// These are the possible commands that a client (workstation) can send to us:
 #define TRIGGERMODE_OFF 0
 #define TRIGGERMODE_NOW 1
 #define TRIGGERMODE_RISING 2
 #define TRIGGERMODE_FALLING 3
-#define TRIGGERMODE_CONTINUOUS 4
+#define TRIGGERMODE_CONTINUOUS 4 // Not implemented yet
+
 
 struct scopeCmdOverUdp {
 	char idToken[8]; // For *incoming udp* must always be: "eFirmata" (so that we ignore random crap)

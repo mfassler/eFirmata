@@ -1,0 +1,11 @@
+
+#ifndef __DEFAULT_IP_ADDRESS_H
+#define __DEFAULT_IP_ADDRESS_H
+
+#define SELF_IP_ADDR {192, 168, 11, 177}
+
+
+
+#endif // __DEFAULT_IP_ADDRESS_H
+
+

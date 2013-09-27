@@ -2,8 +2,6 @@
 #ifndef __ARP_H
 #define __ARP_H
 
-//char myIpAddress[4] = {192, 168, 11, 169};
-//char myMacAddress[6] = SELF_ADDR;
 
 struct arpEntry {
 	uint8_t macAddress[6];

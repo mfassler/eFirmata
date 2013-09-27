@@ -15,6 +15,7 @@
 
 
 void udpPWM(struct ethernetFrame *frame, unsigned int length) {
+
 	const char FIRMATA_ID_SUBTOKEN[3] = "PWM"; // This is PWM
 	const uint8_t FIRMATA_PWM_VERSION = 0;
 
@@ -24,6 +25,8 @@ void udpPWM(struct ethernetFrame *frame, unsigned int length) {
 	struct udpPacket *udp;
 	struct pwmCmdOverUdp *cmd;
 	unsigned short i;
+
+	(void)length;  // Unused parameter
 
 	ip = (struct ipPacket*) &frame->payload;
 	udp = (struct udpPacket*) &ip->data;

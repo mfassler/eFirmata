@@ -130,8 +130,8 @@ void prepOutgoingFastBuffers(struct ethernetFrame *inFrame, unsigned int inFrame
 	outUdpB->destPort = inUdp->srcPort;
 
 	// IPv4 lets us ignore UDP checksums:
-	outUdpA->udpChecksum = 0;
-	outUdpB->udpChecksum = 0;
+	outUdpA->checksum = 0;
+	outUdpB->checksum = 0;
 }
 
 
