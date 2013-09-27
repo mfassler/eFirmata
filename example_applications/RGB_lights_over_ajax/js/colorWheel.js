@@ -82,7 +82,7 @@ function updateSwatch(red, green, blue) {
 	swatchDiv.style.backgroundColor = 'rgb(' + red + ', ' + green + ', ' + blue + ')';
 
 	var swatchTextDiv = document.getElementById('swatchText');
-	swatchTextDiv.innerText = hexFormatColors(red, green, blue);
+	swatchTextDiv.innerHTML = hexFormatColors(red, green, blue);
 
 /*
 	// Font color against background color:
