@@ -49,9 +49,9 @@ void parseIncomingUdpPacket(struct ethernetFrame *frame, unsigned int length) {
 		case 2115:
 			udpPWM(frame, length);
 			break;
-		//case 2116:
-		//	udpSPI(frame, length);
-		//	break;
+		case 2116:
+			udpSPI(frame, length);
+			break;
 		default:
 			debugWord("UDP Packet, port: ", myPort);
 			break;

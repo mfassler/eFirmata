@@ -17,7 +17,7 @@
 #include "network/ip.h"
 #include "network/DEFAULT_IP_ADDRESS.h"
 
-//#include "ssp.h"
+#include "ssp.h"
 #include "adc.h"
 #include "dac.h"
 #include "pwm.h"
@@ -31,7 +31,7 @@ void SysTick_Handler (void) {
 	currentTime++;
 
 	// Since we have our own RxFIFO, we have to have our own "timeout" on stale data:
-	//SSP0_pleaseReceive();
+	SSP0_pleaseReceive();
 }
 
 
@@ -80,7 +80,7 @@ int main(void) {
 	DACInit();
 	PWM_Init();
 	PWM_Start();
-	//SSP0Init();
+	SSP0Init();
 
 	// Right now, these are only used for the Reflex board:
 	//GPIO_Interrupts_Init();

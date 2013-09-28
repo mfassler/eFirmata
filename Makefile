@@ -22,11 +22,11 @@ OBJECTS += network/udp.o
 OBJECTS += network/udpCat.o
 OBJECTS += network/udpServices/oscope.o
 OBJECTS += network/udpServices/firmataPWM.o
-#OBJECTS += network/udpServices/firmataSPI.o
+OBJECTS += network/udpServices/firmataSPI.o
 OBJECTS += ethernetPHY.o
 OBJECTS += emac.o
 
-#OBJECTS += ssp.o
+OBJECTS += ssp.o
 OBJECTS += adc.o
 OBJECTS += dac.o
 OBJECTS += pwm.o
