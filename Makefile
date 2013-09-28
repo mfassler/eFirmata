@@ -12,17 +12,20 @@ OBJECTS += CMSIS/system_LPC17xx.o
 OBJECTS += peripheralClocks.o
 OBJECTS += uart.o
 OBJECTS += debug.o
+
 OBJECTS += network/ethernet.o
 OBJECTS += network/firmataProtocol.o
 OBJECTS += network/arp.o
 OBJECTS += network/ip.o
 OBJECTS += network/icmp.o
 OBJECTS += network/udp.o
+OBJECTS += network/udpCat.o
 OBJECTS += network/udpServices/oscope.o
 OBJECTS += network/udpServices/firmataPWM.o
 #OBJECTS += network/udpServices/firmataSPI.o
 OBJECTS += ethernetPHY.o
 OBJECTS += emac.o
+
 #OBJECTS += ssp.o
 OBJECTS += adc.o
 OBJECTS += dac.o
@@ -64,8 +67,7 @@ INCDIRS = -I ./ -I CMSIS/
 
 CFLAGS = -W -Wall -Os --std=gnu99 -fgnu89-inline -mcpu=cortex-m3 -mthumb
 CFLAGS += -ffunction-sections -fdata-sections
-#CFLAGS += -DSELF_ADDR={0x00,0x02,0xf7,0xaa,0xbf,0xcd}
-#CLFAGS += -DDEST_ADDR={0xE0,0xCB,0x4E,0x47,0x7F,0x9B}
+#CFLAGS += -D'SELF_IP_ADDR={192, 168, 11, 177}'
 CFLAGS += $(INCDIRS)
 
 #LDFLAGS = -Map $(TARGET).map --gc-sections -T LPC1768-flash.ld
