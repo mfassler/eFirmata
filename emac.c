@@ -101,8 +101,6 @@ void setLinkMode(uint8_t speed, uint8_t duplex) {
 }
 
 
-extern char myMacAddress[];
-
 void Init_EMAC(void) {
 
 	// Power Up the EMAC controller.
