@@ -17,6 +17,8 @@ struct ethernetFrame {
 
 };
 
+extern volatile char myMacAddress[];
+
 extern void parseFrame(struct ethernetFrame*, unsigned int);
 extern void ethernetInitTxBuffers(void);
 extern struct ethernetFrame *ethernetGetNextTxBuffer(uint16_t);

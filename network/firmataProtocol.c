@@ -8,7 +8,7 @@
 #include "emac.h"
 
 
-void parseIncomingFirmataPacket(struct incomingFirmataPacket *ptr) {
+void parseIncomingFirmataPacket(void *ptr) {
 	(void)ptr; // unused parameter
 
 	debug("received firmata over ethernet");

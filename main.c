@@ -22,13 +22,16 @@
 #include "dac.h"
 #include "pwm.h"
 
-volatile uint32_t current_time;
+volatile uint32_t currentTime;
 
 
 void SysTick_Handler (void) {
 	// Things to do 100 times per second
 
-	current_time++;
+	currentTime++;
+
+	// Since we have our own RxFIFO, we have to have our own "timeout" on stale data:
+	//SSP0_pleaseReceive();
 }
 
 
@@ -78,7 +81,6 @@ int main(void) {
 	PWM_Init();
 	PWM_Start();
 	//SSP0Init();
-	//SSP1Init();
 
 	// Right now, these are only used for the Reflex board:
 	//GPIO_Interrupts_Init();

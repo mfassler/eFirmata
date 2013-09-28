@@ -19,6 +19,9 @@ struct ipPacket {
 	uint8_t data[];
 };
 
+extern volatile char myIpAddress_char[];
+extern volatile uint32_t myIpAddress_longBE;
+
 
 extern void parseIncomingIpPacket(struct ethernetFrame *, unsigned int);
 extern uint16_t internetChecksum(void *, unsigned int);

@@ -10,8 +10,12 @@
 #include "network/udp.h"
 
 volatile char myIpAddress_char[4];
-volatile uint32_t myIpAddress_longBE; // 32-bit big-endian, for quicker operations
 
+
+// 32-bit big-endian, for quicker operations
+// (I can conceive of future protocols where this won't align on 32-bit boundaries.
+//  But for now, it always does...):
+volatile uint32_t myIpAddress_longBE;
 
 
 void parseIncomingIpPacket(struct ethernetFrame *frame, unsigned int length) {

@@ -4,11 +4,10 @@
 #include "debug.h"
 
 #include "emac.h"
+#include "network/ip.h"
 #include "network/ethernet.h"
 #include "network/arp.h"
 
-extern char myMacAddress[];
-extern volatile char myIpAddress_char[];
 
 void parseIncomingArpPacket(struct arpPacket *pkt) {
 
