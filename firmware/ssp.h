@@ -12,7 +12,7 @@ void SSP0_tryToSend(void);
 
 extern void SSP0_receiveIntoFIFO(char *, uint8_t);
 extern void SSP0_pleaseSend(char *, uint8_t);
-
+extern void SSP0_pleaseReceive(void);
 
 
 #endif  // __SSP_H__

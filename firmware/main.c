@@ -16,6 +16,7 @@
 #include "network/ethernet.h"
 #include "network/ip.h"
 #include "network/DEFAULT_IP_ADDRESS.h"
+#include "network/udpCat.h"
 
 #include "ssp.h"
 #include "adc.h"
@@ -64,6 +65,7 @@ int main(void) {
 
 	LPC_GPIO1->FIOSET = bit23;  // Turn on blinky LED #4
 
+	ncDebug("Network online.");
 
 	// ***** BEGIN:  Initialize peripherials
 

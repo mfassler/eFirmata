@@ -36,10 +36,10 @@ struct ethernetFrame *nc_makeIPv4Packet(uint32_t destIpAddrBE) {
 
 	for(i=0; i<6; i++) {
 		frame->src[i] = myMacAddress[i];
-		frame->dest[i] = nc_endpoint_macAddr[i];
+		frame->dest[i] = nc_endpoint_macAddr[i];  // <-- TODO:  look this up in ARP
 	}
 
-	ip->srcIpAddr = myIpAddress_longBE;   // <-- TODO:  look this up in ARP
+	ip->srcIpAddr = myIpAddress_longBE;
 	ip->destIpAddr = destIpAddrBE;
 
 	ip->version = 0x45;

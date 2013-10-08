@@ -96,7 +96,7 @@ void SSP0_pleaseSend(char *buf, uint8_t bufLen) {
 
 void SSP0_pleaseReceive(void) {
 
-	static uint32_t prevTime = 0;
+	//static uint32_t prevTime = 0;
 
 	uint8_t framesToSend;
 
@@ -106,15 +106,17 @@ void SSP0_pleaseReceive(void) {
 		return;
 	}
 
-	// We only send 20 times per second, max:
-	if ((currentTime - prevTime) < 5) {
+/*
+	// We only send 100 times per second, max:
+	if ((currentTime - prevTime) < 1) {
 		return;
 	}
+*/
 
 	udpSPI_replyToSender(SSP0_rxBuffer, SSP0_rxBuffer_consumeIdx, framesToSend);
 
 	SSP0_rxBuffer_consumeIdx += framesToSend;
-	prevTime = currentTime;
+	//prevTime = currentTime;
 }
 
 
