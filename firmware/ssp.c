@@ -111,7 +111,7 @@ void SSP0_pleaseReceive(void) {
 		return;
 	}
 
-	udpSPI_replyToSender(&SSP0_rxBuffer, SSP0_rxBuffer_consumeIdx, framesToSend);
+	udpSPI_replyToSender(SSP0_rxBuffer, SSP0_rxBuffer_consumeIdx, framesToSend);
 
 	SSP0_rxBuffer_consumeIdx += framesToSend;
 	prevTime = currentTime;
