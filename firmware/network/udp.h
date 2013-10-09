@@ -1,6 +1,6 @@
 
-#ifndef __UDP_
-#define __UDP_
+#ifndef __UDP_H_
+#define __UDP_H_
 
 
 // For *incoming firmata-over-udp packets*, the first 8 bytes MUST
@@ -21,6 +21,9 @@ struct udpPacket {
 extern void parseIncomingUdpPacket(struct ethernetFrame *, unsigned int);
 extern void udpEcho(struct ethernetFrame *, unsigned int);
 extern void udpToDebug(char *, unsigned short);
+extern struct ethernetFrame *udp_makeAndPrepareUdpPacket(uint32_t, char *, uint16_t, uint16_t);
+extern void udp_finishAndSendUdpPacket(struct ethernetFrame *, unsigned int);
 
-#endif // __UDP_
+
+#endif // __UDP_H_
 

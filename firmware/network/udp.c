@@ -8,7 +8,7 @@
 
 #include "network/udpServices/oscope.h"
 #include "network/udpServices/firmataPWM.h"
-//#include "network/udpServices/firmataSPI.h"
+#include "network/udpServices/firmataSPI.h"
 
 
 // For incoming firmata-over-UDP packets, the first 8 bytes MUST
@@ -118,4 +118,58 @@ void udpToDebug(char * data, unsigned short length) {
 	debug(buffer);
 }
 
+
+
+struct ethernetFrame *udp_makeAndPrepareUdpPacket(uint32_t destIpAddrBE, char *destMacAddr, uint16_t srcPort, uint16_t destPort) {
+	unsigned int i;
+
+	struct ethernetFrame *frame;
+	struct ipPacket *ip;
+	struct udpPacket *udp;
+
+	frame = ethernetGetNextTxBuffer(0x0800);
+	ip = (struct ipPacket*) &frame->payload;
+	udp = (struct udpPacket*) &ip->data;
+
+	for(i=0; i<6; i++) {
+		frame->src[i] = myMacAddress[i];
+		frame->dest[i] = destMacAddr[i];
+	}
+
+	ip->srcIpAddr = myIpAddress_longBE;
+	ip->destIpAddr = destIpAddrBE;
+
+	ip->version = 0x45;
+	ip->diffServicesField = 0;
+	ip->identification = 0; // necessary?  other uses?
+	ip->flagsAndFragOffset = 0x40; // don't fragment, no offset
+	ip->ttl = 64;
+	ip->protocol = 17; // UDP over IP
+	udp->srcPort = htons(srcPort);
+	udp->destPort = htons(destPort);
+
+	return frame;
+}
+
+
+void udp_finishAndSendUdpPacket(struct ethernetFrame *frame, unsigned int udpDataLen) {
+
+	struct ipPacket *ip;
+	struct udpPacket *udp;
+
+	ip = (struct ipPacket*) &frame->payload;
+	udp = (struct udpPacket*) &ip->data;
+
+	// Ethernet header is 14 bytes
+	// IP header is 20 bytes
+	// UDP Header is 8 bytes
+	udp->length = htons(8 + udpDataLen);
+	ip->totalLength = htons(20 + 8 + udpDataLen);
+
+	udp->checksum = 0;
+	ip->headerChecksum = 0;
+	ip->headerChecksum = internetChecksum(ip, 20);
+
+	ethernetPleaseSend(frame, (14 + 20 + 8 + udpDataLen));
+}
 

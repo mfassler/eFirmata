@@ -16,59 +16,26 @@
  *  to a workstation once the network is working.  
  */
 
+
+
 // Where shall we send our messages to?
 const char nc_endpoint_macAddr[6] = {0xe0, 0xcb, 0x4e, 0x47, 0x7f, 0x9b};
 const uint32_t nc_endpoint_ipAddr = 0xc80ba8c0; // Big-endian
 const uint16_t nc_endpoint_destPort = 0x1234; // Little-endian
-const uint16_t nc_endpoint_srcPort = 0x1234; // Little-endian
 const char nc_endpoint_connected = 1;
 
+struct ethernetFrame *nc_makePacket(void) {
 
+	uint16_t srcPort = 0x1234;  // local-endian (little-endian)
 
-struct ethernetFrame *nc_makeIPv4Packet(uint32_t destIpAddrBE) {
-	unsigned int i;
-
-	struct ethernetFrame *frame;
-	struct ipPacket *ip;
-
-	frame = ethernetGetNextTxBuffer(0x0800);
-	ip = (struct ipPacket*) &frame->payload;
-
-	for(i=0; i<6; i++) {
-		frame->src[i] = myMacAddress[i];
-		frame->dest[i] = nc_endpoint_macAddr[i];  // <-- TODO:  look this up in ARP
-	}
-
-	ip->srcIpAddr = myIpAddress_longBE;
-	ip->destIpAddr = destIpAddrBE;
-
-	ip->version = 0x45;
-	ip->diffServicesField = 0;
-	ip->identification = 0; // necessary?  other uses?
-	ip->flagsAndFragOffset = 0x40; // don't fragment, no offset
-	ip->ttl = 64;
-
-	return frame;
+	return udp_makeAndPrepareUdpPacket(
+		nc_endpoint_ipAddr,
+		(char *) nc_endpoint_macAddr,
+		nc_endpoint_destPort,
+		srcPort
+	);
 }
 
-
-void nc_finishAndSendUdpPacket(struct ethernetFrame *frame, unsigned int udpDataLen) {
-
-	struct ipPacket *ip;
-	struct udpPacket *udp;
-
-	ip = (struct ipPacket*) &frame->payload;
-	udp = (struct udpPacket*) &ip->data;
-
-	udp->length = htons(8 + udpDataLen);
-	ip->totalLength = htons(20 + 8 + udpDataLen);
-
-	udp->checksum = 0;
-	ip->headerChecksum = 0;
-	ip->headerChecksum = internetChecksum(ip, 20);
-
-	ethernetPleaseSend(frame, (14 + 20 + 8 + udpDataLen));
-}
 
 
 
@@ -83,13 +50,9 @@ void nc(char *msg) {
 		return;
 	}
 
-	frame = nc_makeIPv4Packet(nc_endpoint_ipAddr);
+	frame = nc_makePacket();
 	ip = (struct ipPacket*) &frame->payload;
-	ip->protocol = 17; // UDP over IP
 	udp = (struct udpPacket*) &ip->data;
-
-	udp->srcPort = htons(nc_endpoint_srcPort);
-	udp->destPort = htons(nc_endpoint_destPort);
 
 	for (i=0; i<300; i++) {
 		udp->data[i] = msg[i];
@@ -98,7 +61,7 @@ void nc(char *msg) {
 		}
 	}
 
-	nc_finishAndSendUdpPacket(frame, i);
+	udp_finishAndSendUdpPacket(frame, i);
 }
 
 
@@ -116,13 +79,9 @@ void ncDebug(char *msg) {
 		return;
 	}
 
-	frame = nc_makeIPv4Packet(nc_endpoint_ipAddr);
+	frame = nc_makePacket();
 	ip = (struct ipPacket*) &frame->payload;
-	ip->protocol = 17; // UDP over IP
 	udp = (struct udpPacket*) &ip->data;
-
-	udp->srcPort = htons(nc_endpoint_srcPort);
-	udp->destPort = htons(nc_endpoint_destPort);
 
 	for (i=0; i<300; i++) {
 		udp->data[i] = msg[i];
@@ -134,7 +93,7 @@ void ncDebug(char *msg) {
 	udp->data[i++] = 0x0d; // CR
 	udp->data[i++] = 0x0a; // LF
 
-	nc_finishAndSendUdpPacket(frame, i);
+	udp_finishAndSendUdpPacket(frame, i);
 }
 
 
@@ -152,13 +111,9 @@ void ncDebugByte(char *msg, uint8_t value) {
 		return;
 	}
 
-	frame = nc_makeIPv4Packet(nc_endpoint_ipAddr);
+	frame = nc_makePacket();
 	ip = (struct ipPacket*) &frame->payload;
-	ip->protocol = 17; // UDP over IP
 	udp = (struct udpPacket*) &ip->data;
-
-	udp->srcPort = htons(nc_endpoint_srcPort);
-	udp->destPort = htons(nc_endpoint_destPort);
 
 	for (i=0; i<300; i++) {
 		udp->data[i] = msg[i];
@@ -178,7 +133,7 @@ void ncDebugByte(char *msg, uint8_t value) {
 	udp->data[i++] = 0x0d; // CR
 	udp->data[i++] = 0x0a; // LF
 
-	nc_finishAndSendUdpPacket(frame, i);
+	udp_finishAndSendUdpPacket(frame, i);
 }
 
 
@@ -196,13 +151,9 @@ void ncDebugWord(char *msg, uint16_t value) {
 		return;
 	}
 
-	frame = nc_makeIPv4Packet(nc_endpoint_ipAddr);
+	frame = nc_makePacket();
 	ip = (struct ipPacket*) &frame->payload;
-	ip->protocol = 17; // UDP over IP
 	udp = (struct udpPacket*) &ip->data;
-
-	udp->srcPort = htons(nc_endpoint_srcPort);
-	udp->destPort = htons(nc_endpoint_destPort);
 
 	for (i=0; i<300; i++) {
 		udp->data[i] = msg[i];
@@ -224,7 +175,7 @@ void ncDebugWord(char *msg, uint16_t value) {
 	udp->data[i++] = 0x0d; // CR
 	udp->data[i++] = 0x0a; // LF
 
-	nc_finishAndSendUdpPacket(frame, i);
+	udp_finishAndSendUdpPacket(frame, i);
 }
 
 
@@ -242,13 +193,9 @@ void ncDebugLong(char *msg, uint32_t value) {
 		return;
 	}
 
-	frame = nc_makeIPv4Packet(nc_endpoint_ipAddr);
+	frame = nc_makePacket();
 	ip = (struct ipPacket*) &frame->payload;
-	ip->protocol = 17; // UDP over IP
 	udp = (struct udpPacket*) &ip->data;
-
-	udp->srcPort = htons(nc_endpoint_srcPort);
-	udp->destPort = htons(nc_endpoint_destPort);
 
 	for (i=0; i<300; i++) {
 		udp->data[i] = msg[i];
@@ -274,5 +221,6 @@ void ncDebugLong(char *msg, uint32_t value) {
 	udp->data[i++] = 0x0d; // CR
 	udp->data[i++] = 0x0a; // LF
 
-	nc_finishAndSendUdpPacket(frame, i);
+	udp_finishAndSendUdpPacket(frame, i);
 }
+
