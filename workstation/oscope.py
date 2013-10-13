@@ -29,6 +29,72 @@ def signal_handler(signal, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 
+
+def unpackChannelMetaData(oneChannelStr):
+    units, dataDataType, realDataType, scaleType, errorType, = struct.unpack('!cccBBxxx', oneChannelStr[:8])
+
+    twoPointStr = oneChannelStr[8:32]
+    errorParameters = oneChannelStr[32:]  # not implemented yet
+
+    ddtSize = struct.calcsize(dataDataType)
+    dataValA, = struct.unpack('!' + dataDataType, twoPointStr[4-ddtSize:4])
+    dataValB, = struct.unpack('!' + dataDataType, twoPointStr[16-ddtSize:16])
+
+    rdtSize = struct.calcsize(realDataType)
+    realValA, = struct.unpack('!' + realDataType, twoPointStr[12-rdtSize:12])
+    realValB, = struct.unpack('!' + realDataType, twoPointStr[24-rdtSize:24])
+
+    namedVals = {'units': units, 'dataDataType': dataDataType, 'realDataType': realDataType,
+        'scale': {dataValA: realValA, dataValB: realValB}}
+
+    return namedVals
+
+
+
+def parseTOM_v0(inPacket):
+    global myParams
+    params = {}
+    units, stepSizeDatatype, numChannels, bytesPerDescriptor = struct.unpack('!BcBB', inPacket[:4])
+
+    dstSize = struct.calcsize(stepSizeDatatype)
+    domainStepSize, = struct.unpack('!' + stepSizeDatatype, inPacket[12-dstSize:12])
+
+    params['domain'] = {'units': chr(units & 0x7f), 'inv': (units & 0x80 == 0x80), 'size': domainStepSize}
+    params['numChannels'] = numChannels
+
+    params['channelMetaData'] = []
+    for i in xrange(numChannels):
+        iStart = 12 + i * bytesPerDescriptor
+        iEnd = 12 + (i+1) * bytesPerDescriptor
+        params['channelMetaData'].append(unpackChannelMetaData(inPacket[iStart:iEnd]))
+    myParams = params
+    return params
+
+
+def parseTOM(inPacket):
+    # We parse packets that begin with 'JimWinksTOM'
+    if inPacket[0] == '\x00':  # version 0
+        return parseTOM_v0(inPacket[1:])
+    return {}
+
+
+
+
+def parseTOD_v0(inPacket):
+    bytesPerSample, numSamples, startSampleNumber = struct.unpack('!BxHL', inPacket [:8])
+
+    stripedData = np.frombuffer(inPacket[8:(bytesPerSample*numSamples)+8], dtype=np.uint8)
+    return (startSampleNumber, bytesPerSample, stripedData)
+
+
+def parseTOD(inPacket):
+    # We parse packets that begin with 'JimWinksTOD'
+    if inPacket[0] == '\x00':  # version 0
+        return parseTOD_v0(inPacket[1:])
+    return None, None, None
+
+
+
 TRIGGERMODE_OFF = 0
 TRIGGERMODE_NOW = 1
 TRIGGERMODE_RISING = 2
@@ -52,18 +118,20 @@ def getTriggeredSample(channel, threshold, triggerModeStr):
         trigMode = TRIGGERMODE_OFF
 
 
-    trigNumSamplesReq = 512
+    trigNumSamplesReq = 531
 
     numChannels = 4
     chA = np.zeros(trigNumSamplesReq)
     chB = np.zeros(trigNumSamplesReq)
     chC = np.zeros(trigNumSamplesReq)
     chD = np.zeros(trigNumSamplesReq)
+    metaData = {}
 
     # Packet structure is: Mode, Channel, Threshold, (dummy byte), NumberOfSamplesRequested
-    trigCmd = chr(trigMode) + chr(channel & 0xff) + chr(threshold & 0xff) + chr(0)
-    trigCmd += struct.pack('!L', trigNumSamplesReq)
+    #trigCmd = chr(trigMode) + chr(channel & 0xff) + chr(threshold & 0xff) + chr(0)
+    #trigCmd += struct.pack('!L', trigNumSamplesReq)
 
+    trigCmd = struct.pack('!BBcxLL', trigMode, channel, 'L', threshold, trigNumSamplesReq)
 
     # Clear out any old data first:
     mySocket.setblocking(0)
@@ -82,8 +150,8 @@ def getTriggeredSample(channel, threshold, triggerModeStr):
 
     # For the firmata-over-UDP protocol, we must declare ourselves to be "eFirmata".
     firmataOverUdpHeader = "eFirmata"
-    # The firmata service we want: TOS (Triggered OscilloScope):
-    firmataOverUdpHeader += "TOS"
+    # The firmata service we want: TOC (Triggered Oscilloscope Command):
+    firmataOverUdpHeader += "TOC"
     # Protocol version 0:
     firmataOverUdpHeader += "\x00"
     # No Flags, no options:
@@ -96,11 +164,9 @@ def getTriggeredSample(channel, threshold, triggerModeStr):
     ## Right now, things are hard-coded for four channels, 256 samples per
     ## ethernet frame (so the data portion that we care about is always 1024 bytes)
     ## On each frame, the data is striped:  chA, chB, chC, chD, chA, chB, chC, chD, chA, ...
-    #DPACKET_SIZE = 1024
-    sStart = 0
-    sEnd = sStart + 256
 
     readingList = [mySocket]
+    sEnd = 0
 
     while 1:
         inputs, outputs, errors = select.select(readingList, [], [], 1.1)
@@ -108,50 +174,104 @@ def getTriggeredSample(channel, threshold, triggerModeStr):
             for oneInput in inputs:
                 if oneInput == mySocket:
                     inPacket = mySocket.recv(1522)
-                    if len(inPacket) > 1023:
-                        stripedData = np.frombuffer(inPacket[:1024], dtype=np.uint8)
-                        chA[sStart:sEnd] = stripedData[::4] #.copy()
-                        chB[sStart:sEnd] = stripedData[1::4] #.copy()
-                        chC[sStart:sEnd] = stripedData[2::4] #.copy()
-                        chD[sStart:sEnd] = stripedData[3::4] #.copy()
-                        sStart += 256
-                        sEnd = sStart + 256
+                    if inPacket[:8] == 'JimWinks':  # This is a return packet from eFirmata
+                        if inPacket[8:11] == 'TOM':  # Triggered Oscilloscope Metadata
+                            metaData = parseTOM(inPacket[11:])
+                        elif inPacket[8:11] == 'TOD':  # Triggered Oscilloscope Data
+                            sStart, bytesPerSample, stripedData = parseTOD(inPacket[11:])
+                            if bytesPerSample:
+                                sEnd = sStart + len(stripedData) / bytesPerSample
+                                chA[sStart:sEnd] = stripedData[::4] #.copy()
+                                chB[sStart:sEnd] = stripedData[1::4] #.copy()
+                                chC[sStart:sEnd] = stripedData[2::4] #.copy()
+                                chD[sStart:sEnd] = stripedData[3::4] #.copy()
+                        else:
+                            print 'wtf'
         else:
             print "timeout waiting for packet"
             break
-        if sEnd > trigNumSamplesReq:
+        if sEnd >= trigNumSamplesReq:
             break
 
-    return chA, chB, chC, chD
+    return metaData, chA, chB, chC, chD
 
 
 def matplotlibStyle():
+    physicalUnits = {'s': 'Seconds', 'V': 'Volts', 'A': 'Amperes'}
+    cnt = 0
     plt.ion()
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    plt.ylim([-14, 270]) # little bit of whitespace for visual margin
+
+    global myMetaData
+
 
     # First time:
-    chA, chB, chC, chD = getTriggeredSample(1, 100, 'rising')
-    lineA, = ax.plot(chA, 'r,')
-    lineB, = ax.plot(chB, 'g,')
-    lineC, = ax.plot(chC, 'b')
-    #lineD, = ax.plot(chD, 'y,')
+    metaData, chA, chB, chC, chD = getTriggeredSample(1, 100, 'rising')
+
+    # We will set the vertical scale according to chA:
+    metaChA = metaData['channelMetaData'][0]
+    dValues = metaChA['scale'].keys()
+    dValues.sort()
+    dRange = dValues[1] - dValues[0]
+    vRange = metaChA['scale'][dValues[1]] - metaChA['scale'][dValues[0]]
+    yScaleAdj = vRange / dRange
+    yScaleOffset = 0.0
+    yTicks = np.linspace(dValues[0], dValues[1], 5)
+    yTickLabels = yTicks * yScaleAdj + yScaleOffset
+    ax.set_yticks(yTicks)
+    ax.set_yticklabels(np.round(yTickLabels, 2))
+
+    # show the full range (vertically), plus a little whitespace
+    extraMargin = dRange * 0.055
+    plt.ylim([dValues[0] - extraMargin, dValues[1] + extraMargin])
+
+    if 'units' in metaChA:
+        if metaChA['units'] in physicalUnits:
+            plt.ylabel(physicalUnits[metaChA['units']])
+        else:
+            plt.ylabel(metaChA['units'])
+
+    ## The horizontal axis
+    if 'units' in metaData['domain']:
+        if metaData['domain']['units'] in physicalUnits:
+            plt.xlabel(physicalUnits[metaData['domain']['units']])
+        else:
+            plt.xlabel(metaData['domain']['units'])
+
+
+    # Create the time scale:
+    dScale = 1.0
+    if 'size' in metaData['domain']:
+        if 'inv' in metaData['domain'] and metaData['domain']['inv']:
+            dScale = 1.0/metaData['domain']['size']
+        else:
+            dScale = metaData['domain']['size']
+    t = np.arange(len(chA)) * dScale
+
+    lineA, = ax.plot(t, chA, 'r,')
+    lineB, = ax.plot(t, chB, 'g,')
+    lineC, = ax.plot(t, chC, 'b')
+    lineD, = ax.plot(t, chD, 'y,')
 
     fig.canvas.draw()
 
     while 1:
         # every subsequent time:
         try:
-            chA, chB, chC, chD = getTriggeredSample(1, 100, 'rising')
+            metaData, chA, chB, chC, chD = getTriggeredSample(1, 100, 'rising')
+            myMetaData = metaData
             lineA.set_ydata(chA)
             lineB.set_ydata(chB)
             lineC.set_ydata(chC)
-            #lineD.set_ydata(chD)
+            lineD.set_ydata(chD)
         except:
             time.sleep(0.1)
         else:
             fig.canvas.draw()
+        #    cnt += 1
+        #if cnt == 5:
+        #    break
 
 
 
@@ -245,7 +365,6 @@ def pygameXYscope():
                 wholeImageBuffer[x,y] = colorA
             pygame.surfarray.blit_array(screen, wholeImageBuffer)
             pygame.display.flip()
-
 
 matplotlibStyle()
 #pygameStyle()

@@ -18,7 +18,7 @@
 #include "network/ethernet.h"
 #include "network/ip.h"
 #include "network/udp.h"
-#include "network/firmataProtocol.h"
+#include "network/udpServices/oscope.h"
 #include "network/endian.h"
 
 
@@ -99,10 +99,13 @@ void adc2network(uint8_t adcChannel, uint8_t adcValue) {
 	struct ethernetFrame *aFrame;
 	struct ipPacket *ip;
 	struct udpPacket *udp;
+	struct scopeData *tod;
+
 	static uint8_t whichFrame =0;
 	static uint16_t whichSampleInPayload = 0;
 	static uint16_t adc_currentSampleNumber = 0;
 	uint16_t payloadIdx;
+	unsigned int payloadSize;
 
 	uint8_t offset;
 	static uint8_t prevTriggerSamples[] = {0,0,0};
@@ -135,28 +138,36 @@ void adc2network(uint8_t adcChannel, uint8_t adcValue) {
 		}
 		ip = (struct ipPacket*) &aFrame->payload;
 		udp = (struct udpPacket*) &ip->data;
+		tod = (struct scopeData*) &udp->data;
+
+		tod->bytesPerSample = 4;
 
 		// Write a byte to the next position in the frame:
-		payloadIdx = whichSampleInPayload * 4 + offset;
-		udp->data[payloadIdx] = adcValue;
+		payloadIdx = whichSampleInPayload * tod->bytesPerSample + offset;
+		tod->data[payloadIdx] = adcValue;
 
 		if (adcChannel > 4) {
 			whichSampleInPayload++;
 			adc_currentSampleNumber++;
 		}
 
-		// Once every 256 samples (1024 bytes total) we will switch buffers
-		// and ask the EMAC to please send the buffer that we just filled:
-		// TODO: this presumes 4 channels and fixed sizes, etc...
-		if (whichSampleInPayload > 255) {
-			whichSampleInPayload = 0;
+		// When we fill up a buffer (a eFrame/IP/UDP/eFirmata packet) or if we've
+		// hit the max number of samples, we'll send a packet
+		if ((adcChannel > 4) && ( (payloadIdx > 1231) || (adc_currentSampleNumber == triggerNumSamplesReq) )) {
+			tod->totalSamples = htons(whichSampleInPayload);
+			//tod->totalSamples = htons(256);
+			tod->startSampleNumber = htonl(adc_currentSampleNumber - whichSampleInPayload);
 
 			// Ethernet header is 14 bytes.
 			// IP header is 20 bytes.
 			// UDP header is 8 bytes.
-			// Payload size is the payloadIdx+1.
-			ip->totalLength = htons( (20 + 8 + payloadIdx + 1) );
-			udp->length = htons( (8 + payloadIdx + 1) );
+			// TOD header is 24 bytes.
+			//payloadSize = tod->bytesPerSample * tod->totalSamples;  // ha.  totalSamples is big-endian
+			payloadSize = tod->bytesPerSample * whichSampleInPayload;
+			whichSampleInPayload = 0;
+
+			ip->totalLength = htons(20 + 8 + 20 + payloadSize);
+			udp->length = htons(8 + 20 + payloadSize);
 
 			if (whichFrame == 0) {
 				whichFrame = 1;
@@ -167,7 +178,7 @@ void adc2network(uint8_t adcChannel, uint8_t adcValue) {
 			ip->headerChecksum = 0;
 			ip->headerChecksum = internetChecksum(ip, 20);
 
-			ethernetPleaseSend(aFrame, (14 + 20 + 8 + payloadIdx + 1));
+			ethernetPleaseSend(aFrame, (14 + 20 + 8 + 20 + payloadSize));
 		}
 
 		// When we hit the max number of samples, we stop:
