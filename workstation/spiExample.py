@@ -39,18 +39,17 @@ def getAllData():
 
 
 def sendSPI(msg):
+    wait = 0
+    CPOL = 1
+    CPHA = 1
+
+    flags = (wait << 2) | (CPOL << 1) | (CPHA << 0)
+
     firmataOverUdpHeader = "eFirmata"
     firmataOverUdpHeader += "SPI"
-    firmataOverUdpHeader += "\x00"
-    firmataOverUdpHeader += "\x00\x00\x00\x00"
-    # mode, bit1->CPOL, bit0->CPHA
-    firmataOverUdpHeader += "\x00"
-
-    msgLen = len(msg)
-    if msgLen > 255:
-        msgLen = 255
-
-    firmataOverUdpHeader += chr(msgLen)
+    firmataOverUdpHeader += "\x00"  # protocol version 0
+    firmataOverUdpHeader += "\x00\x00\x00"  # reserved for future use
+    firmataOverUdpHeader += chr(flags)
 
     return mySocket.send(firmataOverUdpHeader + msg[:255])
 
@@ -80,7 +79,7 @@ def sampleFromMcp(whichChannel):
 
     sendSPI(cmd)
 
-    mySocket.settimeout(0.05)
+    mySocket.settimeout(0.2)
     resp = mySocket.recv(len(cmd))
     mySocket.settimeout(None)
 

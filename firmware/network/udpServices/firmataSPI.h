@@ -8,9 +8,8 @@ struct spiCmdOverUdp {
 	char idToken[8]; // For *incoming udp* must always be: "eFirmata" (so that we ignore random crap)
 	char idSubToken[3]; // For incoming UDP, must always be:  "SPI"
 	uint8_t version; // Protocol version.  Right now, only 0x00 is allowed. 
-	uint32_t extra; // This will be for flags, options, etc.  Ignored for now.  Set to zeros.
-	char mode; // bit1->CPOL, bit0->CPHA
-	uint8_t numBytes;
+	char extra[3];
+	uint8_t flags;  // bit2 is "wait", bit1 is "CPOL", bit0 is "CPHA"
 	char data[];
 };
 

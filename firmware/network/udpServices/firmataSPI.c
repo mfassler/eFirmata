@@ -66,7 +66,8 @@ void udpSPI(struct ethernetFrame *frame, unsigned int length) {
 	spi_endpoint_srcPort = udp->destPort;
 	spi_endpoint_connected = 1;
 
-	SSP0_pleaseSend(cmd->data, cmd->numBytes);
+	// UDP header is 8 bytes.  SPI-over-UDP header is 16 bytes
+	SSP0_pleaseSend(cmd->data, ntohs(udp->length) - 24);
 }
 
 
