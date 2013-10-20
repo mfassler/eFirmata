@@ -194,16 +194,23 @@ void adc2network(uint8_t adcChannel, uint8_t adcValue) {
 		if ((adcChannel == triggerChannel) && triggerEnabled) {
 
 			if (triggerDirection) { // 1 is rising, 0 is falling
-				if ((prevTriggerSamples[2] < triggerLevel) && (prevTriggerSamples[1] < triggerLevel) &&
-					(prevTriggerSamples[0] > triggerLevel) && (adcValue > triggerLevel)) {
+
+				if ((prevTriggerSamples[2] <= prevTriggerSamples[1]) &&
+					(prevTriggerSamples[1] <= prevTriggerSamples[0]) &&
+					(prevTriggerSamples[0] <= triggerLevel) &&
+					(triggerLevel < adcValue))
+				{
 					adc_weAreSending = 1;
 					triggerEnabled = 0;
 				}
 
 			} else { // falling trigger
 
-				if ((prevTriggerSamples[2] > triggerLevel) && (prevTriggerSamples[1] > triggerLevel) &&
-					(prevTriggerSamples[0] < triggerLevel) && (adcValue < triggerLevel)) {
+				if ((prevTriggerSamples[2] >= prevTriggerSamples[1]) &&
+					(prevTriggerSamples[1] >= prevTriggerSamples[0]) &&
+					(prevTriggerSamples[0] >= triggerLevel) &&
+					(triggerLevel > adcValue))
+				{
 					adc_weAreSending = 1;
 					triggerEnabled = 0;
 				}
