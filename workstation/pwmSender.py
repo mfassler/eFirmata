@@ -4,7 +4,7 @@
 import socket
 import struct
 
-deviceAddr = ('192.168.11.177', 2115)
+deviceAddr = ('192.168.11.177', 2116)
 
 
 mySocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM);

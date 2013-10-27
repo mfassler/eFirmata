@@ -19,7 +19,7 @@ $blue = minMax($blue);
 
 
 // THIS IS THE IP ADDRESS and port number for your eFirmata device:
-$fp = stream_socket_client("udp://192.168.11.177:2115", $errno, $errstr);
+$fp = stream_socket_client("udp://192.168.11.177:2116", $errno, $errstr);
 
 
 if ($fp) {

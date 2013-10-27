@@ -65,7 +65,7 @@ INCDIRS = -I ./ -I CMSIS/
 #####   Flags
 #####
 
-CFLAGS = -W -Wall -Os --std=gnu99 -fgnu89-inline -mcpu=cortex-m3 -mthumb
+CFLAGS = -W -Wall -O2 --std=gnu99 -fgnu89-inline -mcpu=cortex-m3 -mthumb
 CFLAGS += -ffunction-sections -fdata-sections
 #CFLAGS += -D'SELF_IP_ADDR={192, 168, 11, 177}'
 CFLAGS += $(INCDIRS)

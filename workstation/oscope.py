@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import pygame
 
 
-deviceAddr = ('192.168.11.177', 2114)
+deviceAddr = ('192.168.11.177', 2117)
 
 mySocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM);
 mySocket.connect(deviceAddr)

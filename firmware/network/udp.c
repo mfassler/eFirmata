@@ -43,13 +43,19 @@ void parseIncomingUdpPacket(struct ethernetFrame *frame, unsigned int length) {
 		case 2113:
 			udpEcho(frame, length);
 			break;
-		case 2114:
-			incomingOscopeOverUdp(frame, length);
-			break;
-		case 2115:
+		//case 2114:
+		//	udpGPO(frame, length);
+		//	break;
+		//case 2115:
+		//	udpGPI(frame, length);
+		//	break;
+		case 2116:
 			udpPWM(frame, length);
 			break;
-		case 2116:
+		case 2117:
+			incomingOscopeOverUdp(frame, length);
+			break;
+		case 2118:
 			udpSPI(frame, length);
 			break;
 		default:
