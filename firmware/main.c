@@ -40,6 +40,7 @@ int main(void) {
 
 	// Default IP address, from an include or Makefile:
 	char myIpAddress[4] = SELF_IP_ADDR;
+	nc_ipaddr_init();
 
 	// Enable our blinky LEDs:
 	LPC_GPIO1->FIODIR = bit18 | bit20 | bit21 | bit23;

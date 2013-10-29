@@ -2,6 +2,8 @@
 #ifndef __UDP_CAT_H_
 #define __UDP_CAT_H_
 
+extern void nc_ipaddr_init(void);
+
 extern void nc(char *);
 extern void ncDebug(char *);
 extern void ncDebugByte(char *, uint8_t);
