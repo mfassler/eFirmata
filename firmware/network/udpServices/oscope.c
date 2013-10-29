@@ -99,15 +99,6 @@ void oscope_sendMetaData(uint32_t destIpAddrBE, char *destMacAddr, uint16_t srcP
 	udp = (struct udpPacket*) &ip->data;
 	tom = (struct scopeMetaData*) &udp->data;
 
-	tom->idToken[0] = 'J';
-	tom->idToken[1] = 'i';
-	tom->idToken[2] = 'm';
-	tom->idToken[3] = 'W';
-	tom->idToken[4] = 'i';
-	tom->idToken[5] = 'n';
-	tom->idToken[6] = 'k';
-	tom->idToken[7] = 's';
-
 	tom->idSubToken[0] = 'T';
 	tom->idSubToken[1] = 'O';
 	tom->idSubToken[2] = 'M';
@@ -235,29 +226,11 @@ void prepOutgoingFastBuffers(uint32_t destIpAddr, char* destMacAddr, uint16_t sr
 	udpB->srcPort = htons(srcPort);
 	udpB->destPort = htons(destPort);
 
-	todA->idToken[0] = 'J';
-	todA->idToken[1] = 'i';
-	todA->idToken[2] = 'm';
-	todA->idToken[3] = 'W';
-	todA->idToken[4] = 'i';
-	todA->idToken[5] = 'n';
-	todA->idToken[6] = 'k';
-	todA->idToken[7] = 's';
-
 	todA->idSubToken[0] = 'T';
 	todA->idSubToken[1] = 'O';
 	todA->idSubToken[2] = 'D';
 
 	todA->version = 0;
-
-	todB->idToken[0] = 'J';
-	todB->idToken[1] = 'i';
-	todB->idToken[2] = 'm';
-	todB->idToken[3] = 'W';
-	todB->idToken[4] = 'i';
-	todB->idToken[5] = 'n';
-	todB->idToken[6] = 'k';
-	todB->idToken[7] = 's';
 
 	todB->idSubToken[0] = 'T';
 	todB->idSubToken[1] = 'O';

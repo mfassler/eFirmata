@@ -77,7 +77,6 @@ struct channelMetaData {
 
 
 struct scopeMetaData {
-	char idToken[8]; // For *outgoing udp* must always be:  "JimWinks"
 	char idSubToken[3]; // Must always be "TOM", for Triggered Oscilloscope Metadata
 	uint8_t version;  // protocol version 0
 
@@ -98,7 +97,6 @@ struct scopeMetaData {
 
 
 struct scopeData {
-	char idToken[8]; // For *outgoing udp* must always be:  "JimWinks"
 	char idSubToken[3]; // Must always be "TOD", for Triggered Oscilloscope Data
 	uint8_t version;  // protocol version 0
 

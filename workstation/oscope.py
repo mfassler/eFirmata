@@ -72,7 +72,7 @@ def parseTOM_v0(inPacket):
 
 
 def parseTOM(inPacket):
-    # We parse packets that begin with 'JimWinksTOM'
+    # We parse packets that begin with 'TOM'
     if inPacket[0] == '\x00':  # version 0
         return parseTOM_v0(inPacket[1:])
     return {}
@@ -88,7 +88,7 @@ def parseTOD_v0(inPacket):
 
 
 def parseTOD(inPacket):
-    # We parse packets that begin with 'JimWinksTOD'
+    # We parse packets that begin with 'TOD'
     if inPacket[0] == '\x00':  # version 0
         return parseTOD_v0(inPacket[1:])
     return None, None, None
@@ -174,19 +174,18 @@ def getTriggeredSample(channel, threshold, triggerModeStr):
             for oneInput in inputs:
                 if oneInput == mySocket:
                     inPacket = mySocket.recv(1522)
-                    if inPacket[:8] == 'JimWinks':  # This is a return packet from eFirmata
-                        if inPacket[8:11] == 'TOM':  # Triggered Oscilloscope Metadata
-                            metaData = parseTOM(inPacket[11:])
-                        elif inPacket[8:11] == 'TOD':  # Triggered Oscilloscope Data
-                            sStart, bytesPerSample, stripedData = parseTOD(inPacket[11:])
-                            if bytesPerSample:
-                                sEnd = sStart + len(stripedData) / bytesPerSample
-                                chA[sStart:sEnd] = stripedData[::4] #.copy()
-                                chB[sStart:sEnd] = stripedData[1::4] #.copy()
-                                chC[sStart:sEnd] = stripedData[2::4] #.copy()
-                                chD[sStart:sEnd] = stripedData[3::4] #.copy()
-                        else:
-                            print 'wtf'
+                    if inPacket[:3] == 'TOM':  # Triggered Oscilloscope Metadata
+                        metaData = parseTOM(inPacket[3:])
+                    elif inPacket[:3] == 'TOD':  # Triggered Oscilloscope Data
+                        sStart, bytesPerSample, stripedData = parseTOD(inPacket[3:])
+                        if bytesPerSample:
+                            sEnd = sStart + len(stripedData) / bytesPerSample
+                            chA[sStart:sEnd] = stripedData[::4] #.copy()
+                            chB[sStart:sEnd] = stripedData[1::4] #.copy()
+                            chC[sStart:sEnd] = stripedData[2::4] #.copy()
+                            chD[sStart:sEnd] = stripedData[3::4] #.copy()
+                    else:
+                        print 'wtf'
         else:
             print "timeout waiting for packet"
             break
