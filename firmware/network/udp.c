@@ -6,8 +6,9 @@
 #include "network/udp.h"
 #include "network/endian.h"
 
-#include "network/udpServices/oscope.h"
+#include "network/udpServices/firmataGPI.h"
 #include "network/udpServices/firmataPWM.h"
+#include "network/udpServices/oscope.h"
 #include "network/udpServices/firmataSPI.h"
 
 
@@ -46,9 +47,9 @@ void parseIncomingUdpPacket(struct ethernetFrame *frame, unsigned int length) {
 		//case 2114:
 		//	udpGPO(frame, length);
 		//	break;
-		//case 2115:
-		//	udpGPI(frame, length);
-		//	break;
+		case 2115:
+			udpGPI(frame, length);
+			break;
 		case 2116:
 			udpPWM(frame, length);
 			break;

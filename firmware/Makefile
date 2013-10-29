@@ -21,6 +21,7 @@ OBJECTS += network/icmp.o
 OBJECTS += network/udp.o
 OBJECTS += network/udpCat.o
 OBJECTS += network/udpServices/oscope.o
+OBJECTS += network/udpServices/firmataGPI.o
 OBJECTS += network/udpServices/firmataPWM.o
 OBJECTS += network/udpServices/firmataSPI.o
 OBJECTS += ethernetPHY.o
