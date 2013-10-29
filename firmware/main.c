@@ -17,6 +17,7 @@
 #include "network/ip.h"
 #include "network/DEFAULT_IP_ADDRESS.h"
 #include "network/udpCat.h"
+#include "network/udpServices/firmataGPO.h"
 
 #include "ssp.h"
 #include "adc.h"
@@ -74,10 +75,7 @@ int main(void) {
 	//LPC_SC->PCONP &= ~((1 << 3) | (1 << 4));
 
 	// Digital outputs for the eFirmata protocol:
-	LPC_GPIO2->FIODIR = 0x00003fc0; // P2.6 through P2.13
-
-	// Digital inputs for the eFirmata protocol:
-	//LPC_GPIO1->FIODIR = // P1.24 through P1.31
+	initGPO();
 
 	ADCInit(); // Interrupt usually occurs immediately, so ENET must be initialized already.
 	DACInit();
