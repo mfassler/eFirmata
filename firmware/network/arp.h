@@ -22,10 +22,21 @@ struct arpPacket {
 	uint8_t targetIpAddress[4];
 };
 
+extern void initArpCache();
 extern void parseIncomingArpPacket(struct arpPacket *);
+extern void txArpRequest(uint32_t);
+extern int arpCacheLookup(uint32_t, char*);
+
 
 #define SIZE_OF_ARP_IN_ETHERNET 42 // Ethernet header + sizeof(struct arpPacket)
 // The current ethernet setup will pad all frames to 60 bytes minimum, regardless...
+
+struct arpCacheEntry {
+	uint32_t ipAddrBE;
+	uint32_t timestamp; // in milli-seconds
+	char macAddr[6];
+	char status; // 0==nothing, 1==reqSent, 2==replyReceived
+};
 
 
 #endif // __ARP_H

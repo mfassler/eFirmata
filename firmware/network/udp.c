@@ -61,7 +61,8 @@ void parseIncomingUdpPacket(struct ethernetFrame *frame, unsigned int length) {
 			udpSPI(frame, length);
 			break;
 		default:
-			debugWord("UDP Packet, port: ", myPort);
+			debugWord("rxUDP, unknown port: ", myPort);
+			debugLong(" ... from: ", ip->srcIpAddr);
 			break;
 	}
 

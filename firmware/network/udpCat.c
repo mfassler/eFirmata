@@ -8,6 +8,7 @@
 #include "network/endian.h"
 #include "network/ethernet.h"
 #include "network/ip.h"
+#include "network/arp.h"
 #include "network/udp.h"
 
 
@@ -20,7 +21,7 @@
 
 // Where shall we send our messages to?
 #include "network/DEFAULT_IP_ADDRESS.h"
-static char nc_endpoint_macAddr[6] = NC_DEBUG_MAC_ADDR;
+
 static uint32_t nc_endpoint_ipAddrBE;
 static uint16_t nc_endpoint_destPort = NC_DEBUG_PORT;
 static char nc_endpoint_connected = NC_DEBUG_CONNECTED;
@@ -28,10 +29,10 @@ static char nc_endpoint_connected = NC_DEBUG_CONNECTED;
 void nc_ipaddr_init(void) {
 	unsigned char nc_ip_addr[4] = NC_DEBUG_IP_ADDR;
 
-	nc_endpoint_ipAddrBE = (nc_ip_addr[3] << 24) |
-			(nc_ip_addr[2] << 16) |
-			(nc_ip_addr[1] << 8) |
-			nc_ip_addr[0];
+	nc_endpoint_ipAddrBE = (nc_ip_addr[0]) |
+	                       (nc_ip_addr[1] << 8) |
+	                       (nc_ip_addr[2] << 16) |
+	                       (nc_ip_addr[3] << 24);
 }
 
 
@@ -39,10 +40,13 @@ void nc_ipaddr_init(void) {
 struct ethernetFrame *nc_makePacket(void) {
 
 	uint16_t srcPort = 0x1234;  // local-endian (little-endian)
+	char nc_endpoint_macAddr[6];
+
+	arpCacheLookup(nc_endpoint_ipAddrBE, nc_endpoint_macAddr);
 
 	return udp_makeAndPrepareUdpPacket(
 		nc_endpoint_ipAddrBE,
-		(char *) nc_endpoint_macAddr,
+		nc_endpoint_macAddr,
 		nc_endpoint_destPort,
 		srcPort
 	);

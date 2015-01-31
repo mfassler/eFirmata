@@ -30,7 +30,8 @@ void parseIncomingIpPacket(struct ethernetFrame *frame, unsigned int length) {
 			parseIncomingUdpPacket(frame, length);
 			break;
 		default:
-			debug("unknown protocol");
+			debugByte("rxIP, unknown protocol: ", pkt->protocol);
+			debugLong(" ... from: ", pkt->srcIpAddr);
 			break;
 	}
 }

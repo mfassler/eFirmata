@@ -15,6 +15,7 @@
 #include "emac.h"
 #include "network/ethernet.h"
 #include "network/ip.h"
+#include "network/arp.h"
 #include "network/DEFAULT_IP_ADDRESS.h"
 #include "network/udpCat.h"
 #include "network/udpServices/firmataGPO.h"
@@ -24,13 +25,17 @@
 #include "dac.h"
 #include "pwm.h"
 
+// currentTime is in ms (JavaScript style).  A 32-bit counter
+// will roll-over once every 49.7 days
 volatile uint32_t currentTime;
 
 
 void SysTick_Handler (void) {
 	// Things to do 100 times per second
 
-	currentTime++;
+	// currentTime is in ms (JavaScript style), but we only update once
+	// per 10 ms.
+	currentTime += 10;
 
 	// Since we have our own RxFIFO, we have to have our own "timeout" on stale data:
 	SSP0_pleaseReceive();
@@ -38,10 +43,14 @@ void SysTick_Handler (void) {
 
 
 int main(void) {
+	currentTime = 0;
 
 	// Default IP address, from an include or Makefile:
 	char myIpAddress[4] = SELF_IP_ADDR;
 	nc_ipaddr_init();
+	initArpCache();
+
+
 
 	// Enable our blinky LEDs:
 	LPC_GPIO1->FIODIR = bit18 | bit20 | bit21 | bit23;
