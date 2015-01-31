@@ -72,9 +72,10 @@ void icmp_answerPing(struct ethernetFrame *request, unsigned int length) {
 	replyIcmp->checksum = 0;
 	replyIcmp->checksum = internetChecksum(replyIcmp, icmpLen);
 
-	//  This will already be correct, since we copied the header from the sender...
-	//replyIp->headerChecksum = 0;
-	//replyIp->headerChecksum = internetChecksum(replyIp, 20);
+	//  This won't be be correct, because we swapped the IP addresses, so
+	// we must calculate it again:
+	replyIp->headerChecksum = 0;
+	replyIp->headerChecksum = internetChecksum(replyIp, 20);
 
 	ethernetPleaseSend(reply, length);
 }
