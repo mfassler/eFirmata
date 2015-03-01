@@ -121,7 +121,6 @@ void udpToDebug(char * data, unsigned short length) {
 			break;
 		}
 	}
-	i++;
 	buffer[i] = 0;
 
 	debug(buffer);
